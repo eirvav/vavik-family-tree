@@ -1,26 +1,52 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm family-archive palette: parchment paper, spruce-green accent,
+     antique-gold reserved for the signature branch motif. */
+  --background: #f6f1e4;
+  --surface: #fffcf5;
+  --foreground: #2b2621;
+  --muted: #5c5245;
+  --line: #e1d5ba;
+  --accent: #3c5844;
+  --accent-hover: #2e4635;
+  --accent-soft: #e7eee5;
+  --gold: #a9832e;
+  --error: #8b3a2b;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-error: var(--error);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #191510;
+    --surface: #221d16;
+    --foreground: #ede6d8;
+    --muted: #a79c89;
+    --line: #3a3226;
+    --accent: #7fa98c;
+    --accent-hover: #99bfa5;
+    --accent-soft: #26332b;
+    --gold: #c9a857;
+    --error: #d08a73;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
