@@ -35,23 +35,41 @@ export default async function LoggInnPage({
         </div>
 
         {sendt === "1" && (
-          <p className="mt-6 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent-hover">
-            Sjekk innboksen din for en innloggingslenke.
+          <p className="mt-6 flex items-start gap-2 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent-hover">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+              <path d="M5.5 10.5L8.5 13.5L14.5 6.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Sjekk innboksen din for en innloggingslenke.</span>
           </p>
         )}
         {feil === "mangler-epost" && (
-          <p className="mt-6 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-            Du må skrive inn en e-postadresse.
+          <p className="mt-6 flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+              <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M10 6.5V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <circle cx="10" cy="13.25" r="0.9" fill="currentColor" />
+            </svg>
+            <span>Du må skrive inn en e-postadresse.</span>
           </p>
         )}
         {feil === "sending-feilet" && (
-          <p className="mt-6 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-            Kunne ikke sende innloggingslenke. Prøv igjen.
+          <p className="mt-6 flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+              <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M10 6.5V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <circle cx="10" cy="13.25" r="0.9" fill="currentColor" />
+            </svg>
+            <span>Kunne ikke sende innloggingslenke. Prøv igjen.</span>
           </p>
         )}
         {feil === "lenke-ugyldig" && (
-          <p className="mt-6 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-            Innloggingslenken var ugyldig eller utløpt. Prøv å logge inn på nytt.
+          <p className="mt-6 flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+              <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M10 6.5V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <circle cx="10" cy="13.25" r="0.9" fill="currentColor" />
+            </svg>
+            <span>Innloggingslenken var ugyldig eller utløpt. Prøv å logge inn på nytt.</span>
           </p>
         )}
 
