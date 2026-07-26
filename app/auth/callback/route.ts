@@ -14,17 +14,20 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
+      if (!user) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/logg-inn?feil=lenke-ugyldig`);
+      }
 
-        if (!profile) {
-          await supabase.auth.signOut();
-          return NextResponse.redirect(`${origin}/ikke-tilgang`);
-        }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        return NextResponse.redirect(`${origin}/ikke-tilgang`);
       }
 
       return NextResponse.redirect(`${origin}/tre`);
