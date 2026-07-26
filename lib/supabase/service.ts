@@ -1,0 +1,10 @@
+import "server-only";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
