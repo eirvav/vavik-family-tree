@@ -10,8 +10,10 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
+    "@xyflow/react": "^12.11.2",
     "next": "16.3.0-canary.97",
     "react": "19.2.8",
     "react-dom": "19.2.8",
