@@ -113,7 +113,32 @@ begin
   end;
 end $$;
 
--- Assertion 5: guest can read people (visible, non-deleted).
+-- Assertion 5: guest cannot update a person's given_name. Unlike INSERT
+-- (which always evaluates WITH CHECK and raises on violation), an UPDATE's
+-- USING clause is applied like a WHERE filter before WITH CHECK is ever
+-- reached: a row the guest can't satisfy app_is_member_or_admin() for is
+-- simply excluded from the update, so it affects zero rows rather than
+-- raising a row-level-security exception. Assert both that zero rows were
+-- affected and that the value is actually unchanged.
+do $$
+declare
+  affected int;
+  post_value text;
+begin
+  update people set given_name = 'GuestEdited'
+  where id = 'b1111111-1111-1111-1111-111111111111';
+  get diagnostics affected = row_count;
+  if affected <> 0 then
+    raise exception 'FAIL: guest successfully updated a person row (% rows affected)', affected;
+  end if;
+
+  select given_name into post_value from people where id = 'b1111111-1111-1111-1111-111111111111';
+  if post_value = 'GuestEdited' then
+    raise exception 'FAIL: guest update silently changed given_name despite RLS';
+  end if;
+end $$;
+
+-- Assertion 6: guest can read people (visible, non-deleted).
 do $$
 declare
   visible_count int;
@@ -124,7 +149,7 @@ begin
   end if;
 end $$;
 
--- Assertion 6: guest can read person_names (visible, non-deleted).
+-- Assertion 7: guest can read person_names (visible, non-deleted).
 do $$
 declare
   visible_count int;
@@ -135,7 +160,7 @@ begin
   end if;
 end $$;
 
--- Assertion 7: guest can read relationships (visible, non-deleted). At this
+-- Assertion 8: guest can read relationships (visible, non-deleted). At this
 -- point exactly 3 exist: grandparent-parent, parent-child (fixture), and the
 -- member-created spouse relationship from Assertion 1. The guest's own
 -- rejected insert attempt in Assertion 4 never persisted.
@@ -149,7 +174,7 @@ begin
   end if;
 end $$;
 
--- Assertion 8: self-relationship is rejected by the check constraint.
+-- Assertion 9: self-relationship is rejected by the check constraint.
 set local request.jwt.claims = '{"sub":"a1111111-1111-1111-1111-111111111111"}';
 do $$
 begin
@@ -163,7 +188,7 @@ begin
   end;
 end $$;
 
--- Assertion 9: an ancestry cycle is rejected by the trigger.
+-- Assertion 10: an ancestry cycle is rejected by the trigger.
 do $$
 begin
   begin
@@ -180,7 +205,7 @@ begin
   end;
 end $$;
 
--- Assertion 10: a duplicate active relationship of the same type is rejected.
+-- Assertion 11: a duplicate active relationship of the same type is rejected.
 do $$
 begin
   begin
@@ -193,7 +218,42 @@ begin
   end;
 end $$;
 
--- Assertion 11: soft-deleting a person succeeds and is hidden from guests
+-- Assertion 12: regression test for the ancestry-cycle trigger's UPDATE
+-- self-collision bug, fixed in migration
+-- 20260727115418_fix_ancestry_cycle_self_exclusion.sql. Reversing a single
+-- existing parent-child edge's direction is a legitimate correction (no
+-- other active edge touches parent_id or child_id at this point, so there is
+-- no genuine cycle) and must succeed. Before the fix, the trigger's
+-- recursive CTE queried `relationships` without excluding the row being
+-- updated (new.id), so it saw the row's own pre-update (OLD) values as if
+-- they were another edge -- making child_id look like an "ancestor" of
+-- itself via parent_id -- and wrongly rejected this update.
+do $$
+begin
+  update relationships
+  set person_a_id = 'b3333333-3333-3333-3333-333333333333',
+      person_b_id = 'b2222222-2222-2222-2222-222222222222'
+  where person_a_id = 'b2222222-2222-2222-2222-222222222222'
+    and person_b_id = 'b3333333-3333-3333-3333-333333333333'
+    and relationship_type = 'biological_parent';
+exception
+  when others then
+    raise exception 'FAIL: reversing a non-cyclic parent-child edge was incorrectly rejected: %', sqlerrm;
+end $$;
+
+-- Restore the original direction so later assertions (which assume
+-- parent_id -> child_id) are unaffected by this regression test.
+do $$
+begin
+  update relationships
+  set person_a_id = 'b2222222-2222-2222-2222-222222222222',
+      person_b_id = 'b3333333-3333-3333-3333-333333333333'
+  where person_a_id = 'b3333333-3333-3333-3333-333333333333'
+    and person_b_id = 'b2222222-2222-2222-2222-222222222222'
+    and relationship_type = 'biological_parent';
+end $$;
+
+-- Assertion 13: soft-deleting a person succeeds and is hidden from guests
 -- but still visible to admin.
 do $$
 begin
@@ -223,7 +283,7 @@ begin
   end if;
 end $$;
 
--- Assertion 12: soft-deleting a relationship succeeds and is hidden from
+-- Assertion 14: soft-deleting a relationship succeeds and is hidden from
 -- guests but still visible to admin (same soft-delete visibility rule as
 -- people/person_names).
 do $$
@@ -266,7 +326,7 @@ begin
   end if;
 end $$;
 
--- Assertion 13: trigram indexes exist and pg_trgm is enabled.
+-- Assertion 15: trigram indexes exist and pg_trgm is enabled.
 reset role;
 do $$
 begin
@@ -278,7 +338,7 @@ begin
   end if;
 end $$;
 
--- Assertion 14: the trigram index is not just present but actually usable by
+-- Assertion 16: the trigram index is not just present but actually usable by
 -- the planner. At this table's tiny row count the planner won't pick an
 -- index scan on its own, so force it to consider index paths (disable seq
 -- scan for this statement only) and confirm the resulting plan reflects an
@@ -301,7 +361,7 @@ begin
   end if;
 end $$;
 
--- Assertion 15: there is no DELETE policy anywhere on people, so even an
+-- Assertion 17: there is no DELETE policy anywhere on people, so even an
 -- admin's hard DELETE is rejected outright (soft-delete via UPDATE is the
 -- only supported deletion path).
 set local role authenticated;
