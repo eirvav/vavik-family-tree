@@ -90,13 +90,15 @@ Independent of people; directional for parent-child, symmetric at the product le
 
 ## 5. RLS
 
-Same pattern established in Phase 0/1: every policy routes through the existing `app_is_authorized()` / `app_is_member_or_admin()` helper functions rather than re-deriving logic inline.
+Same pattern established in Phase 0/1: every policy routes through the existing `app_is_authorized()` / `app_is_member_or_admin()` / `app_is_authorized_guest()` helper functions rather than re-deriving logic inline.
+
+SELECT has one nuance beyond Phase 0/1's pattern: soft-deleted rows must stay visible to members/admins (who get a future recovery interface, per spec §9.4) but hidden from guests (who never get one). So SELECT is `app_is_member_or_admin() or (app_is_authorized_guest() and deleted_at is null)` rather than a flat `app_is_authorized()`.
 
 | Table | SELECT | INSERT/UPDATE | DELETE |
 |---|---|---|---|
-| `people` | `app_is_authorized()` (guest/member/admin) | `app_is_member_or_admin()` | none (soft-delete only) |
-| `person_names` | `app_is_authorized()` | `app_is_member_or_admin()` | none |
-| `relationships` | `app_is_authorized()` | `app_is_member_or_admin()` | none |
+| `people` | member/admin see all rows; guest sees only non-deleted | `app_is_member_or_admin()` | none (soft-delete only) |
+| `person_names` | same pattern | `app_is_member_or_admin()` | none |
+| `relationships` | same pattern | `app_is_member_or_admin()` | none |
 
 Base-table GRANTs to `authenticated` must accompany these policies explicitly (this project's established gotcha: RLS policies alone don't grant Postgres table privileges — Tasks 8 and the password-auth pivot both had to add missing grants after the fact).
 
