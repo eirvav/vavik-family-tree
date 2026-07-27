@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
+import { DetailPanel } from "./detail-panel";
 import { computeDagreLayout } from "@/lib/family-tree/layout";
 import { savePersonPosition, resetLayout } from "./actions";
 import type { Person, Relationship, CanvasPositionRow } from "@/lib/family-tree/data";
@@ -48,7 +49,11 @@ export function FamilyTreeCanvas({
   canEdit: boolean;
   isAdmin: boolean;
 }) {
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"compact" | "full" | null>(null);
+
   const positionByPersonId = new Map(positions.map((p) => [p.person_id, p]));
+  const peopleById = new Map(people.map((p) => [p.id, p]));
   const dagreLayout = computeDagreLayout(people, relationships);
 
   const initialNodes = people.map((person) => {
@@ -102,6 +107,30 @@ export function FamilyTreeCanvas({
     window.location.reload();
   }, []);
 
+  const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedPersonId(node.id);
+    setPanelMode("compact");
+  }, []);
+
+  const handleNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedPersonId(node.id);
+    setPanelMode("full");
+  }, []);
+
+  const handleClosePanel = useCallback(() => {
+    setSelectedPersonId(null);
+    setPanelMode(null);
+  }, []);
+
+  const handleExpandPanel = useCallback(() => {
+    setPanelMode("full");
+  }, []);
+
+  const handleSelectPerson = useCallback((personId: string) => {
+    setSelectedPersonId(personId);
+    setPanelMode("compact");
+  }, []);
+
   return (
     <div className="relative h-full w-full">
       {isAdmin && (
@@ -119,12 +148,25 @@ export function FamilyTreeCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={handleNodeDragStop}
+        onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         nodesDraggable={canEdit}
         fitView
       >
         <Background />
         <Controls />
       </ReactFlow>
+      {selectedPersonId && panelMode && (
+        <DetailPanel
+          person={peopleById.get(selectedPersonId)!}
+          relationships={relationships}
+          peopleById={peopleById}
+          mode={panelMode}
+          onClose={handleClosePanel}
+          onExpand={handleExpandPanel}
+          onSelectPerson={handleSelectPerson}
+        />
+      )}
     </div>
   );
 }
