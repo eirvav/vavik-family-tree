@@ -3,7 +3,7 @@
 import { Handle, Position } from "@xyflow/react";
 import type { Person } from "@/lib/family-tree/data";
 
-const GENDER_ICON: Record<Person["gender"], string> = {
+export const GENDER_ICON: Record<Person["gender"], string> = {
   male: "♂",
   female: "♀",
   unknown: "•",

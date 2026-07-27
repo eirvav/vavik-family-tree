@@ -141,8 +141,17 @@ export function FamilyTreeCanvas({
       {isAdmin && (
         <button
           onClick={handleResetLayout}
-          className="absolute right-4 top-4 z-10 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="shrink-0 text-muted">
+            <path
+              d="M15.5 5.5A6 6 0 1 0 16 10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path d="M15.5 2V5.5H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           Tilbakestill oppsett
         </button>
       )}
@@ -220,9 +229,24 @@ function SearchBar({
   return (
     <div className="absolute left-4 top-4 z-10 w-72">
       <div className="relative">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 20 20"
+          fill="none"
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+        >
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M16 16L12.8 12.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        <label htmlFor="tre-sok" className="sr-only">
+          Søk etter person i familietreet
+        </label>
         <input
+          id="tre-sok"
           type="text"
-          placeholder="Søk etter person..."
+          placeholder="Søk etter navn eller sted"
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -230,25 +254,27 @@ function SearchBar({
           }}
           onFocus={() => setShowSearchDropdown(true)}
           onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
-          className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-foreground placeholder-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="w-full rounded-lg border border-line bg-surface py-2 pl-8 pr-3 text-sm text-foreground shadow-sm placeholder:text-muted/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         />
         {showSearchDropdown && searchQuery && searchResults.length > 0 && (
-          <div className="absolute top-full mt-1 w-full rounded-lg border border-line bg-surface shadow-lg">
+          <div className="absolute top-full mt-1.5 w-full overflow-hidden rounded-lg border border-line bg-surface shadow-lg">
             {searchResults.slice(0, 10).map((person) => (
               <button
                 key={person.id}
                 onClick={() => handleSelectResult(person)}
-                className="block w-full px-3 py-2 text-left text-sm text-foreground hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="block w-full border-b border-line px-3.5 py-2 text-left last:border-b-0 hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
               >
-                {person.given_name} {person.family_name}
-                {person.birth_place && <span className="text-muted"> · {person.birth_place}</span>}
+                <span className="font-serif text-sm text-foreground">
+                  {person.given_name} {person.family_name}
+                </span>
+                {person.birth_place && <span className="ml-1.5 text-xs text-muted">{person.birth_place}</span>}
               </button>
             ))}
           </div>
         )}
         {showSearchDropdown && searchQuery && searchResults.length === 0 && (
-          <div className="absolute top-full mt-1 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted shadow-lg">
-            Ingen søkeresultater
+          <div className="absolute top-full mt-1.5 w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm text-muted shadow-lg">
+            Ingen treff
           </div>
         )}
       </div>

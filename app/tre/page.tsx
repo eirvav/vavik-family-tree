@@ -75,6 +75,24 @@ export default async function TrePage({
           </form>
         </div>
 
+        <section className="mt-8 flex flex-col gap-5 rounded-2xl border border-line bg-surface p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-serif text-lg font-medium tracking-tight text-foreground">Familietreet</h2>
+            <p className="mt-1.5 text-sm text-muted">
+              Bla gjennom slekten som et tre, eller søk opp noen i en enkel liste.
+            </p>
+          </div>
+          <a
+            href="/tre-slekt"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Se familietreet
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="shrink-0">
+              <path d="M8 4.5L14 10L8 15.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        </section>
+
         {isAdmin && (
           <>
             <section className="mt-8 rounded-2xl border border-line bg-surface p-8 shadow-sm">
