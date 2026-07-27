@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Person, Relationship } from "@/lib/family-tree/data";
 import { FamilyTreeCanvas } from "./canvas";
 import { ListView } from "./list-view";
@@ -17,11 +17,16 @@ export function ViewWrapper({
   isAdmin: boolean;
 }) {
   const [viewMode, setViewMode] = useState<"tre" | "liste">("tre");
-  const [orientation, setOrientation] = useState<"tb" | "lr">(() => {
-    if (typeof window === "undefined") return "tb";
+  const [orientation, setOrientation] = useState<"tb" | "lr">("tb");
+
+  // Client-side hydration: read localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
     const saved = localStorage.getItem("familietre-orientasjon");
-    return saved === "tb" || saved === "lr" ? saved : "tb";
-  });
+    if (saved === "tb" || saved === "lr") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOrientation(saved);
+    }
+  }, []);
 
   const handleSetOrientation = (next: "tb" | "lr") => {
     setOrientation(next);
