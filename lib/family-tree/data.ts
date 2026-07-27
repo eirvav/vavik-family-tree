@@ -28,16 +28,10 @@ export type Relationship = {
     | "former_partner";
 };
 
-export type CanvasPositionRow = {
-  person_id: string;
-  x: number;
-  y: number;
-};
-
 export async function getFamilyTreeData() {
   const supabase = await createClient();
 
-  const [peopleResult, relationshipsResult, positionsResult] = await Promise.all([
+  const [peopleResult, relationshipsResult] = await Promise.all([
     supabase
       .from("people")
       .select("id, given_name, family_name, gender, is_living, birth_date_display, death_date_display, biography, birth_place, death_place")
@@ -46,16 +40,13 @@ export async function getFamilyTreeData() {
       .from("relationships")
       .select("id, person_a_id, person_b_id, relationship_type")
       .is("deleted_at", null),
-    supabase.from("canvas_positions").select("person_id, x, y"),
   ]);
 
   if (peopleResult.error) throw new Error(peopleResult.error.message);
   if (relationshipsResult.error) throw new Error(relationshipsResult.error.message);
-  if (positionsResult.error) throw new Error(positionsResult.error.message);
 
   return {
     people: (peopleResult.data ?? []) as Person[],
     relationships: (relationshipsResult.data ?? []) as Relationship[],
-    positions: (positionsResult.data ?? []) as CanvasPositionRow[],
   };
 }

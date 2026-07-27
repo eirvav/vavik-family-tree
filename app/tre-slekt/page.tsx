@@ -32,14 +32,13 @@ export default async function TreSlektPage() {
     isAdmin = profile.role === "admin";
   }
 
-  const { people, relationships, positions } = await getFamilyTreeData();
+  const { people, relationships } = await getFamilyTreeData();
 
   return (
     <main className="flex h-screen w-full flex-col">
       <ViewWrapper
         people={people}
         relationships={relationships}
-        positions={positions}
         canEdit={canEdit}
         isAdmin={isAdmin}
       />

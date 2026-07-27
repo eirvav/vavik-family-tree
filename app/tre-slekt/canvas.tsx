@@ -7,9 +7,8 @@ import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
 import { DetailPanel } from "./detail-panel";
 import { computeDagreLayout } from "@/lib/family-tree/layout";
-import { savePersonPosition, resetLayout } from "./actions";
 import { searchPeople } from "@/lib/family-tree/search";
-import type { Person, Relationship, CanvasPositionRow } from "@/lib/family-tree/data";
+import type { Person, Relationship } from "@/lib/family-tree/data";
 
 const nodeTypes = { person: PersonNode };
 
@@ -40,13 +39,11 @@ const RELATIONSHIP_LABELS: Partial<Record<Relationship["relationship_type"], str
 export function FamilyTreeCanvas({
   people,
   relationships,
-  positions,
   canEdit,
   isAdmin,
 }: {
   people: Person[];
   relationships: Relationship[];
-  positions: CanvasPositionRow[];
   canEdit: boolean;
   isAdmin: boolean;
 }) {
@@ -55,20 +52,15 @@ export function FamilyTreeCanvas({
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
-  const positionByPersonId = new Map(positions.map((p) => [p.person_id, p]));
   const peopleById = new Map(people.map((p) => [p.id, p]));
   const dagreLayout = computeDagreLayout(people, relationships);
 
-  const initialNodes = people.map((person) => {
-    const saved = positionByPersonId.get(person.id);
-    const fallback = dagreLayout.get(person.id) ?? { x: 0, y: 0 };
-    return {
-      id: person.id,
-      type: "person",
-      position: saved ? { x: saved.x, y: saved.y } : fallback,
-      data: { person },
-    };
-  });
+  const initialNodes = people.map((person) => ({
+    id: person.id,
+    type: "person",
+    position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
+    data: { person },
+  }));
 
   const initialEdges = relationships.map((rel) => {
     const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
@@ -92,25 +84,6 @@ export function FamilyTreeCanvas({
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
-
-  const handleNodeDragStop = useCallback(
-    (_event: MouseEvent | TouchEvent, node: Node) => {
-      if (!canEdit) return;
-      void savePersonPosition(node.id, node.position.x, node.position.y).then(({ error }) => {
-        if (error) window.alert(error);
-      });
-    },
-    [canEdit]
-  );
-
-  const handleResetLayout = useCallback(async () => {
-    const { error } = await resetLayout();
-    if (error) {
-      window.alert(error);
-      return;
-    }
-    window.location.reload();
-  }, []);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);
@@ -140,33 +113,15 @@ export function FamilyTreeCanvas({
 
   return (
     <div className="relative h-full w-full">
-      {isAdmin && (
-        <button
-          onClick={handleResetLayout}
-          className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="shrink-0 text-muted">
-            <path
-              d="M15.5 5.5A6 6 0 1 0 16 10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path d="M15.5 2V5.5H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Tilbakestill oppsett
-        </button>
-      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodeDragStop={handleNodeDragStop}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
-        nodesDraggable={canEdit}
+        nodesDraggable={false}
         fitView
       >
         <Background />

@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import type { Person, Relationship, CanvasPositionRow } from "@/lib/family-tree/data";
+import type { Person, Relationship } from "@/lib/family-tree/data";
 import { FamilyTreeCanvas } from "./canvas";
 import { ListView } from "./list-view";
 
 export function ViewWrapper({
   people,
   relationships,
-  positions,
   canEdit,
   isAdmin,
 }: {
   people: Person[];
   relationships: Relationship[];
-  positions: CanvasPositionRow[];
   canEdit: boolean;
   isAdmin: boolean;
 }) {
@@ -69,7 +67,6 @@ export function ViewWrapper({
           <FamilyTreeCanvas
             people={people}
             relationships={relationships}
-            positions={positions}
             canEdit={canEdit}
             isAdmin={isAdmin}
           />
