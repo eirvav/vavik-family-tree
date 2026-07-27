@@ -262,7 +262,7 @@ function SearchBar({
               <button
                 key={person.id}
                 onClick={() => handleSelectResult(person)}
-                className="block w-full border-b border-line px-3.5 py-2 text-left last:border-b-0 hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+                className="block w-full border-b border-line px-3.5 py-2 text-left last:border-b-0 hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 <span className="font-serif text-sm text-foreground">
                   {person.given_name} {person.family_name}
