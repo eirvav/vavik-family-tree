@@ -3,6 +3,7 @@
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
+import { computeDagreLayout } from "@/lib/family-tree/layout";
 import type { Person, Relationship, CanvasPositionRow } from "@/lib/family-tree/data";
 
 const nodeTypes = { person: PersonNode };
@@ -45,13 +46,15 @@ export function FamilyTreeCanvas({
   isAdmin: boolean;
 }) {
   const positionByPersonId = new Map(positions.map((p) => [p.person_id, p]));
+  const dagreLayout = computeDagreLayout(people, relationships);
 
-  const initialNodes = people.map((person, index) => {
+  const initialNodes = people.map((person) => {
     const saved = positionByPersonId.get(person.id);
+    const fallback = dagreLayout.get(person.id) ?? { x: 0, y: 0 };
     return {
       id: person.id,
       type: "person",
-      position: saved ? { x: saved.x, y: saved.y } : { x: (index % 10) * 200, y: Math.floor(index / 10) * 150 },
+      position: saved ? { x: saved.x, y: saved.y } : fallback,
       data: { person },
     };
   });
