@@ -14,10 +14,10 @@ insert into auth.users (id, email) values
   ('33333333-3333-3333-3333-333333333333', 'disabled@example.test'),
   ('44444444-4444-4444-4444-444444444444', 'guest-anon@example.test');
 
-insert into profiles (user_id, display_name, role, status) values
-  ('11111111-1111-1111-1111-111111111111', 'Test Admin', 'admin', 'active'),
-  ('22222222-2222-2222-2222-222222222222', 'Test Member', 'member', 'active'),
-  ('33333333-3333-3333-3333-333333333333', 'Test Disabled', 'member', 'disabled');
+insert into profiles (user_id, email, first_name, last_name, role, status) values
+  ('11111111-1111-1111-1111-111111111111', 'admin@example.test', 'Test', 'Admin', 'admin', 'active'),
+  ('22222222-2222-2222-2222-222222222222', 'member@example.test', 'Test', 'Member', 'member', 'active'),
+  ('33333333-3333-3333-3333-333333333333', 'disabled@example.test', 'Test', 'Disabled', 'member', 'disabled');
 
 insert into guest_sessions (user_id, expires_at) values
   ('44444444-4444-4444-4444-444444444444', now() + interval '1 day');
