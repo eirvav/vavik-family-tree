@@ -1,8 +1,35 @@
 "use client";
 
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState } from "@xyflow/react";
+import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { PersonNode } from "./person-node";
 import type { Person, Relationship, CanvasPositionRow } from "@/lib/family-tree/data";
+
+const nodeTypes = { person: PersonNode };
+
+const PARENT_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
+  "biological_parent",
+  "adoptive_parent",
+  "foster_parent",
+  "guardian_parent",
+]);
+
+const PARTNER_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
+  "spouse",
+  "former_spouse",
+  "partner",
+  "former_partner",
+]);
+
+// Norwegian labels shown on edges for relationship types that aren't the "default"
+// within their category (biological_parent / spouse need no label).
+const RELATIONSHIP_LABELS: Partial<Record<Relationship["relationship_type"], string>> = {
+  adoptive_parent: "adoptivforelder",
+  foster_parent: "fosterforelder",
+  guardian_parent: "verge",
+  former_spouse: "tidligere ektefelle",
+  former_partner: "tidligere partner",
+};
 
 export function FamilyTreeCanvas({
   people,
@@ -23,23 +50,45 @@ export function FamilyTreeCanvas({
     const saved = positionByPersonId.get(person.id);
     return {
       id: person.id,
+      type: "person",
       position: saved ? { x: saved.x, y: saved.y } : { x: (index % 10) * 200, y: Math.floor(index / 10) * 150 },
-      data: { label: `${person.given_name} ${person.family_name}` },
+      data: { person },
     };
   });
 
-  const initialEdges = relationships.map((rel) => ({
-    id: rel.id,
-    source: rel.person_a_id,
-    target: rel.person_b_id,
-  }));
+  const initialEdges = relationships.map((rel) => {
+    const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
+    const isPartnerEdge = PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type);
+    const label = RELATIONSHIP_LABELS[rel.relationship_type];
+
+    return {
+      id: rel.id,
+      source: rel.person_a_id,
+      target: rel.person_b_id,
+      ...(isParentEdge && {
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed },
+      }),
+      ...(isPartnerEdge && {
+        style: { strokeDasharray: "5,5" },
+      }),
+      ...(label && { label }),
+    };
+  });
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   return (
     <div className="h-full w-full">
-      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} fitView>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        fitView
+      >
         <Background />
         <Controls />
       </ReactFlow>
