@@ -96,7 +96,7 @@ export function ListView({
                   <li key={person.id}>
                     <button
                       onClick={() => handleSelectPerson(person.id)}
-                      className="flex w-full items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-left text-sm hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                      className="flex w-full items-center gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-left text-sm hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     >
                       <span
                         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-background text-xs text-muted"

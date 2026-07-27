@@ -36,7 +36,10 @@ export function DetailPanel({
       const isA = r.person_a_id === person.id;
       const otherId = isA ? r.person_b_id : r.person_a_id;
       const other = peopleById.get(otherId);
-      const label = isA ? RELATIONSHIP_LABEL_NO[r.relationship_type].asParent : RELATIONSHIP_LABEL_NO[r.relationship_type].asChild;
+      // person_a_id is the parent for parent/child relationship types (matches
+      // the Dagre layout direction in lib/family-tree/layout.ts), so when the
+      // viewed person IS person_a, the OTHER person is their child.
+      const label = isA ? RELATIONSHIP_LABEL_NO[r.relationship_type].asChild : RELATIONSHIP_LABEL_NO[r.relationship_type].asParent;
       return other ? { other, label } : null;
     })
     .filter((x): x is { other: Person; label: string } => x !== null);

@@ -59,8 +59,13 @@ export function ViewWrapper({
           </button>
         </div>
       </div>
-      <div className="flex-1">
-        {viewMode === "tre" && (
+      <div className="relative flex-1">
+        {/* Both views stay mounted and are shown/hidden via CSS rather than
+            conditional rendering, so a dragged-and-persisted node position
+            in the canvas survives switching to List view and back — an
+            unmount would re-seed react-flow's node state from the original
+            page-load snapshot and silently revert the drag. */}
+        <div className={`absolute inset-0 ${viewMode === "tre" ? "" : "hidden"}`}>
           <FamilyTreeCanvas
             people={people}
             relationships={relationships}
@@ -68,8 +73,10 @@ export function ViewWrapper({
             canEdit={canEdit}
             isAdmin={isAdmin}
           />
-        )}
-        {viewMode === "liste" && <ListView people={people} relationships={relationships} />}
+        </div>
+        <div className={`absolute inset-0 ${viewMode === "liste" ? "" : "hidden"}`}>
+          <ListView people={people} relationships={relationships} />
+        </div>
       </div>
     </div>
   );

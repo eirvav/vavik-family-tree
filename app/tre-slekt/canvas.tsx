@@ -96,7 +96,9 @@ export function FamilyTreeCanvas({
   const handleNodeDragStop = useCallback(
     (_event: MouseEvent | TouchEvent, node: Node) => {
       if (!canEdit) return;
-      void savePersonPosition(node.id, node.position.x, node.position.y);
+      void savePersonPosition(node.id, node.position.x, node.position.y).then(({ error }) => {
+        if (error) window.alert(error);
+      });
     },
     [canEdit]
   );
@@ -175,7 +177,7 @@ export function FamilyTreeCanvas({
           searchResults={searchResults}
           showSearchDropdown={showSearchDropdown}
           setShowSearchDropdown={setShowSearchDropdown}
-          initialNodes={initialNodes}
+          nodes={nodes}
           onSelectPerson={handleSelectPerson}
         />
       </ReactFlow>
@@ -200,7 +202,7 @@ function SearchBar({
   searchResults,
   showSearchDropdown,
   setShowSearchDropdown,
-  initialNodes,
+  nodes,
   onSelectPerson,
 }: {
   searchQuery: string;
@@ -208,22 +210,25 @@ function SearchBar({
   searchResults: Person[];
   showSearchDropdown: boolean;
   setShowSearchDropdown: (show: boolean) => void;
-  initialNodes: Node[];
+  nodes: Node[];
   onSelectPerson: (personId: string) => void;
 }) {
   const reactFlow = useReactFlow();
 
   const handleSelectResult = useCallback(
-    async (person: Person) => {
-      const node = initialNodes.find((n) => n.id === person.id);
+    (person: Person) => {
+      const node = nodes.find((n) => n.id === person.id);
       if (node) {
-        await reactFlow.setCenter(node.position.x, node.position.y, { zoom: 1.2, duration: 500 });
+        // Not awaited: panning is a purely cosmetic animation, and nothing
+        // below depends on it finishing (opening the detail panel and
+        // clearing the search box should happen immediately on selection).
+        void reactFlow.setCenter(node.position.x, node.position.y, { zoom: 1.2, duration: 500 });
       }
       onSelectPerson(person.id);
       setSearchQuery("");
       setShowSearchDropdown(false);
     },
-    [initialNodes, reactFlow, onSelectPerson, setSearchQuery, setShowSearchDropdown]
+    [nodes, reactFlow, onSelectPerson, setSearchQuery, setShowSearchDropdown]
   );
 
   return (
