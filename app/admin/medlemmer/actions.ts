@@ -59,6 +59,7 @@ export async function opprettMedlem(formData: FormData) {
   });
 
   if (profileError) {
+    await service.auth.admin.deleteUser(created.user.id);
     redirect("/admin/medlemmer?feil=opprettelse-feilet");
   }
 
