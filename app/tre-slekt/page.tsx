@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getFamilyTreeData } from "@/lib/family-tree/data";
-import { FamilyTreeCanvas } from "./canvas";
+import { ViewWrapper } from "./view-wrapper";
 
 export default async function TreSlektPage() {
   const supabase = await createClient();
@@ -36,7 +36,7 @@ export default async function TreSlektPage() {
 
   return (
     <main className="flex h-screen w-full flex-col">
-      <FamilyTreeCanvas
+      <ViewWrapper
         people={people}
         relationships={relationships}
         positions={positions}
