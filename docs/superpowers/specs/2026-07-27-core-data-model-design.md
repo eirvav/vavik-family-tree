@@ -64,6 +64,7 @@ Alternates only — former names, birth names, nicknames. The person's current/p
 | `value` | text, not null | |
 | `ordering` | int, not null, default 0 | |
 | `notes` | text, nullable | |
+| `deleted_at` / `deleted_by` | timestamptz / uuid, nullable | soft deletion, for consistency with `people`/`relationships` — the spec's "deletes are soft" principle applies to family content generally, not just the two largest tables |
 
 ### `relationships`
 Independent of people; directional for parent-child, symmetric at the product level for partner types.
