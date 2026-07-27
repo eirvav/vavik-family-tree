@@ -12,10 +12,6 @@ Never add a `Co-Authored-By: Claude` (or similar) trailer to commit messages in 
 
 Manage pushing, creating PRs, and merging autonomously in this repo — proceed without asking for confirmation on these specific actions. This does not relax the usual care around destructive operations (force-push, `--no-verify`, discarding uncommitted work): investigate and report those rather than acting unilaterally.
 
-# No subagents
-
-Do not use subagents (the Agent tool / superpowers:subagent-driven-development) in this repo. Implement and review code directly, inline, in the main session.
-
 # UI/UX standing directives
 
 - Prioritize UX and visual polish over speed of delivery — the app should feel easy and pleasant to use, not merely functional.
