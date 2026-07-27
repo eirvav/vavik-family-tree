@@ -17,10 +17,20 @@ export function ViewWrapper({
   isAdmin: boolean;
 }) {
   const [viewMode, setViewMode] = useState<"tre" | "liste">("tre");
+  const [orientation, setOrientation] = useState<"tb" | "lr">(() => {
+    if (typeof window === "undefined") return "tb";
+    const saved = localStorage.getItem("familietre-orientasjon");
+    return saved === "tb" || saved === "lr" ? saved : "tb";
+  });
+
+  const handleSetOrientation = (next: "tb" | "lr") => {
+    setOrientation(next);
+    localStorage.setItem("familietre-orientasjon", next);
+  };
 
   return (
     <div className="flex h-screen w-full flex-col">
-      <div className="flex items-center border-b border-line bg-surface px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-line bg-surface px-4 py-3">
         <div
           role="group"
           aria-label="Visningsmodus"
@@ -56,19 +66,54 @@ export function ViewWrapper({
             Liste
           </button>
         </div>
+
+        {viewMode === "tre" && (
+          <div
+            role="group"
+            aria-label="Retning på treet"
+            className="inline-flex gap-1 rounded-full border border-line bg-background p-1"
+          >
+            <button
+              onClick={() => handleSetOrientation("tb")}
+              aria-pressed={orientation === "tb"}
+              title="Topp til bunn"
+              className={`flex items-center justify-center rounded-full p-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                orientation === "tb" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 3V17M10 17L6 13M10 17L14 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="sr-only">Topp til bunn</span>
+            </button>
+            <button
+              onClick={() => handleSetOrientation("lr")}
+              aria-pressed={orientation === "lr"}
+              title="Venstre til høyre"
+              className={`flex items-center justify-center rounded-full p-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                orientation === "lr" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3 10H17M17 10L13 6M17 10L13 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="sr-only">Venstre til høyre</span>
+            </button>
+          </div>
+        )}
       </div>
       <div className="relative flex-1">
         {/* Both views stay mounted and are shown/hidden via CSS rather than
-            conditional rendering, so a dragged-and-persisted node position
-            in the canvas survives switching to List view and back — an
-            unmount would re-seed react-flow's node state from the original
-            page-load snapshot and silently revert the drag. */}
+            conditional rendering, so that switching between tree and list
+            views doesn't unmount/remount the List view and lose its internal
+            scroll state. */}
         <div className={`absolute inset-0 ${viewMode === "tre" ? "" : "hidden"}`}>
           <FamilyTreeCanvas
             people={people}
             relationships={relationships}
             canEdit={canEdit}
             isAdmin={isAdmin}
+            orientation={orientation}
           />
         </div>
         <div className={`absolute inset-0 ${viewMode === "liste" ? "" : "hidden"}`}>

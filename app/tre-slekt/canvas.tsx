@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -41,11 +41,13 @@ export function FamilyTreeCanvas({
   relationships,
   canEdit,
   isAdmin,
+  orientation,
 }: {
   people: Person[];
   relationships: Relationship[];
   canEdit: boolean;
   isAdmin: boolean;
+  orientation: "tb" | "lr";
 }) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [panelMode, setPanelMode] = useState<"compact" | "full" | null>(null);
@@ -53,7 +55,7 @@ export function FamilyTreeCanvas({
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
-  const dagreLayout = computeDagreLayout(people, relationships);
+  const dagreLayout = computeDagreLayout(people, relationships, orientation);
 
   const initialNodes = people.map((person) => ({
     id: person.id,
@@ -82,8 +84,20 @@ export function FamilyTreeCanvas({
     };
   });
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+
+  useEffect(() => {
+    setNodes(
+      people.map((person) => ({
+        id: person.id,
+        type: "person",
+        position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
+        data: { person },
+      }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation]);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);

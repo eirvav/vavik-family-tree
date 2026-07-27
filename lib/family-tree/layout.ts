@@ -12,22 +12,25 @@ const PARENT_TYPES = new Set<Relationship["relationship_type"]>([
 ]);
 
 /**
- * Computes a top-down (parents above children) generational layout for the
- * family tree using Dagre. Only parent-child edges drive the ranking — partner
- * edges are intentionally excluded because they'd confuse a strictly
- * hierarchical layout algorithm. Partners still end up positioned near each
- * other in practice because they usually share children, not because of an
- * explicit partner-edge constraint.
+ * Computes a generational layout for the family tree using Dagre. Only
+ * parent-child edges drive the ranking — partner edges are intentionally
+ * excluded because they'd confuse a strictly hierarchical layout algorithm.
+ * Partners still end up positioned near each other in practice because they
+ * usually share children, not because of an explicit partner-edge constraint.
+ *
+ * Orientation controls the direction: "tb" (top-to-bottom, parents above
+ * children) or "lr" (left-to-right, ancestors on the left).
  *
  * Pure function: takes the full people/relationship lists and returns a map of
  * person id -> computed {x, y}, independent of any saved canvas positions.
  */
 export function computeDagreLayout(
   people: Person[],
-  relationships: Relationship[]
+  relationships: Relationship[],
+  orientation: "tb" | "lr"
 ): Map<string, { x: number; y: number }> {
   const graph = new dagre.graphlib.Graph();
-  graph.setGraph({ rankdir: "TB", nodesep: 40, ranksep: 100 });
+  graph.setGraph({ rankdir: orientation === "tb" ? "TB" : "LR", nodesep: 40, ranksep: 100 });
   graph.setDefaultEdgeLabel(() => ({}));
 
   for (const person of people) {
