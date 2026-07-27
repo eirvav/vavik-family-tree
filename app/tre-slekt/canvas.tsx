@@ -161,7 +161,6 @@ export function FamilyTreeCanvas({
         <Background />
         <Controls />
         <SearchBar
-          people={people}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           searchResults={searchResults}
@@ -187,7 +186,6 @@ export function FamilyTreeCanvas({
 }
 
 function SearchBar({
-  people,
   searchQuery,
   setSearchQuery,
   searchResults,
@@ -196,7 +194,6 @@ function SearchBar({
   initialNodes,
   onSelectPerson,
 }: {
-  people: Person[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   searchResults: Person[];
