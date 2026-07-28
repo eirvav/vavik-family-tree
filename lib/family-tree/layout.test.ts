@@ -126,12 +126,25 @@ test("doesn't crash on a parent-child edge between two people already collapsed 
   expect(layout.get("a")!.x).not.toBe(layout.get("b")!.x);
 });
 
-test("reserves enough width for a wide branch so it doesn't overlap its neighbor", () => {
+test("reserves enough width for a wide branch so its column doesn't overlap its neighbor's", () => {
   // topA+topB have two children, b1a and b2a. b1a partners with b1b and
   // they have THREE children together (needing more width than b1a+b1b's
   // own 2-person box); b2a partners with b2b and they have only one child.
   // This is the exact shape of the confirmed overlap bug: b1's branch
   // needs 3*200+2*40=680px for its children, more than its own 440px.
+  //
+  // Note this is NOT caught by checking whether b1's own children (c1, c2,
+  // c3) stay spaced apart from each other, or from b2's child (c4), at
+  // their shared rank: Dagre's nodesep constraint between same-rank
+  // siblings is a hard invariant it always enforces given each node's own
+  // declared width, with or without this fix (verified directly against
+  // the pre-fix commit: that check passes unmodified). The actual bug is
+  // that b1's branch, as a whole vertical column (its own box plus
+  // everything descending from it), encroaches horizontally on b2's column
+  // even though the two branches' nodes never share a rank -- because
+  // pre-fix, b1's declared Dagre width was only its own 440px box, so
+  // Dagre didn't reserve enough clearance between the b1 and b2 columns
+  // for b1's wider subtree to fit without spilling into b2's territory.
   const topA = makePerson("topA", "TopA");
   const topB = makePerson("topB", "TopB");
   const b1a = makePerson("b1a", "B1A");
@@ -163,9 +176,26 @@ test("reserves enough width for a wide branch so it doesn't overlap its neighbor
 
   const layout = computeDagreLayout(people, relationships);
 
-  // All four grandchildren are at the same rank. With a uniform node width
-  // of 200px, no two of them should be closer than 200px center-to-center
-  // — anything less means their boxes overlap.
+  // A branch's "column" is the horizontal extent of its own box plus every
+  // descendant's box, across all ranks (each box is NODE_WIDTH=200px wide,
+  // so extends 100px either side of its center x).
+  function columnExtent(ids: string[]) {
+    const xs = ids.map((id) => layout.get(id)!.x);
+    return { min: Math.min(...xs) - 100, max: Math.max(...xs) + 100 };
+  }
+  const b1Column = columnExtent(["b1a", "b1b", "c1", "c2", "c3"]);
+  const b2Column = columnExtent(["b2a", "b2b", "c4"]);
+
+  // The two branches' columns must not overlap horizontally at all, no
+  // matter which rank each node within them occupies. A positive value
+  // here means the columns overlap by that many pixels.
+  const columnOverlap = Math.min(b1Column.max, b2Column.max) - Math.max(b1Column.min, b2Column.min);
+  expect(columnOverlap).toBeLessThanOrEqual(0);
+
+  // Sanity check: all four grandchildren are at the same rank and, with a
+  // uniform node width of 200px, none should be closer than 200px
+  // center-to-center — anything less means their boxes overlap. (This
+  // alone doesn't exercise the fix — see the comment above.)
   const grandchildren = ["c1", "c2", "c3", "c4"];
   for (let i = 0; i < grandchildren.length; i++) {
     for (let j = i + 1; j < grandchildren.length; j++) {
