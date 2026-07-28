@@ -87,18 +87,6 @@ export function FamilyTreeCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
-  useEffect(() => {
-    setNodes(
-      people.map((person) => ({
-        id: person.id,
-        type: "person",
-        position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
-        data: { person },
-      }))
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orientation]);
-
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);
     setPanelMode("compact");
@@ -140,6 +128,12 @@ export function FamilyTreeCanvas({
       >
         <Background />
         <Controls />
+        <OrientationEffectHandler
+          people={people}
+          orientation={orientation}
+          dagreLayout={dagreLayout}
+          setNodes={setNodes}
+        />
         <SearchBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -163,6 +157,36 @@ export function FamilyTreeCanvas({
       )}
     </div>
   );
+}
+
+function OrientationEffectHandler({
+  people,
+  orientation,
+  dagreLayout,
+  setNodes,
+}: {
+  people: Person[];
+  orientation: "tb" | "lr";
+  dagreLayout: Map<string, { x: number; y: number }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setNodes: (nodes: any[]) => void;
+}) {
+  const reactFlow = useReactFlow();
+
+  useEffect(() => {
+    setNodes(
+      people.map((person) => ({
+        id: person.id,
+        type: "person",
+        position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
+        data: { person },
+      }))
+    );
+    void reactFlow.fitView({ duration: 500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orientation]);
+
+  return null;
 }
 
 function SearchBar({

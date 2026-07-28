@@ -22,7 +22,7 @@ const PARENT_TYPES = new Set<Relationship["relationship_type"]>([
  * children) or "lr" (left-to-right, ancestors on the left).
  *
  * Pure function: takes the full people/relationship lists and returns a map of
- * person id -> computed {x, y}, independent of any saved canvas positions.
+ * person id -> computed {x, y}.
  */
 export function computeDagreLayout(
   people: Person[],
