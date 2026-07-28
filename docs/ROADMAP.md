@@ -13,6 +13,7 @@ Each entry links to its design spec and implementation plan under `docs/superpow
 | 3. Tree experience | ✅ Done | React Flow + Dagre canvas; search; detail panels; accessibility list view. |
 | 4a. Static layout rework | ✅ Done | Removed drag-to-reposition; orientation toggle (top-to-bottom / left-to-right); dark mode dropped. |
 | 4b. Editing (floating action bar) | ✅ Done | Admin-only floating action bar to add father/mother/sibling/partner/child; two-tab (Personinfo/Biografi) sidebar with inline editing; member biography-only editing; delete with a tree-connectivity check. |
+| 4b-polish. Tree editing polish | ✅ Done | Direct `sibling` relationship type (always-available, no parent required); partner/sibling layout adjacency; correct current/former partner edge styling; selected-person canvas highlight; genuinely responsive canvas/sidebar layout; redesigned action bar with icons; removed the horizontal orientation toggle (vertical-only). |
 | 5. Stories & avatars | ⬜ Not started | Stories/notes table for people; generated avatar system (not uploads, per spec). Next up. |
 | 6. Administration | ⬜ Not started | Invitations, guest-code rotation UI, richer member management (currently create+list only). |
 | 7. Hardening | ⬜ Not started | Accessibility polish, performance, backups, monitoring. |
@@ -20,8 +21,9 @@ Each entry links to its design spec and implementation plan under `docs/superpow
 ## Standing directives (see also `CLAUDE.md`)
 
 - Light mode only, no dark mode.
-- Tree canvas nodes are never draggable — layout is always automatic, with the orientation toggle as the only user control over shape.
+- Tree canvas nodes are never draggable — layout is always automatic, vertical (top-to-bottom) only, no orientation toggle.
 - Editing (Phase 4b onward) happens through the floating bottom action bar, not traditional forms-on-a-page.
+- The canvas/sidebar layout must stay genuinely responsive at any window width, including phone widths.
 - Prioritize UX/visual polish over speed of delivery.
 - Manage git push/PR/merge autonomously in this repo (no need to ask each time).
 
@@ -39,3 +41,4 @@ Each entry links to its design spec and implementation plan under `docs/superpow
 | 3 | [tree-canvas-design.md](superpowers/specs/2026-07-27-tree-canvas-design.md) | [tree-canvas.md](superpowers/plans/2026-07-27-tree-canvas.md) |
 | 4a | [static-canvas-light-mode-design.md](superpowers/specs/2026-07-28-static-canvas-light-mode-design.md) | [static-canvas-light-mode.md](superpowers/plans/2026-07-28-static-canvas-light-mode.md) |
 | 4b | [editing-floating-action-bar-design.md](superpowers/specs/2026-07-28-editing-floating-action-bar-design.md) | [editing-floating-action-bar.md](superpowers/plans/2026-07-28-editing-floating-action-bar.md) |
+| 4b-polish | [tree-editing-polish-design.md](superpowers/specs/2026-07-28-tree-editing-polish-design.md) | [tree-editing-polish.md](superpowers/plans/2026-07-28-tree-editing-polish.md) |
