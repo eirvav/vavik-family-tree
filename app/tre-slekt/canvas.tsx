@@ -143,29 +143,61 @@ export function FamilyTreeCanvas({
   const searchResults = searchPeople(people, searchQuery);
 
   return (
-    <div className="relative h-full w-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={handleNodeClick}
-        nodesDraggable={false}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <SearchBar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          searchResults={searchResults}
-          showSearchDropdown={showSearchDropdown}
-          setShowSearchDropdown={setShowSearchDropdown}
+    <div className="flex h-full w-full">
+      <div className="relative h-full flex-1">
+        <ReactFlow
           nodes={nodes}
-          onSelectPerson={handleSelectPerson}
-        />
-      </ReactFlow>
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={handleNodeClick}
+          nodesDraggable={false}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <SearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+            showSearchDropdown={showSearchDropdown}
+            setShowSearchDropdown={setShowSearchDropdown}
+            nodes={nodes}
+            onSelectPerson={handleSelectPerson}
+          />
+        </ReactFlow>
+        {isAdmin && selectedPerson && (
+          <ActionBar
+            selectedPerson={selectedPerson}
+            onAdd={(kind) => setActiveDialog({ type: "add", kind })}
+            onDelete={() => setActiveDialog({ type: "delete" })}
+          />
+        )}
+        {activeDialog?.type === "add" && selectedPerson && (
+          <AddRelationshipDialog
+            key={activeDialog.kind}
+            kind={activeDialog.kind}
+            selectedPerson={selectedPerson}
+            partners={selectedPersonPartners}
+            onClose={() => setActiveDialog(null)}
+            onCreated={(newPersonId) => {
+              setActiveDialog(null);
+              setSelectedPersonId(newPersonId);
+            }}
+          />
+        )}
+        {activeDialog?.type === "delete" && selectedPerson && (
+          <DeletePersonDialog
+            person={selectedPerson}
+            onClose={() => setActiveDialog(null)}
+            onDeleted={() => {
+              setActiveDialog(null);
+              setSelectedPersonId(null);
+            }}
+          />
+        )}
+      </div>
       {selectedPerson && (
         <DetailPanel
           person={selectedPerson}
@@ -175,36 +207,6 @@ export function FamilyTreeCanvas({
           isAdmin={isAdmin}
           onClose={handleClosePanel}
           onSelectPerson={handleSelectPerson}
-        />
-      )}
-      {isAdmin && selectedPerson && (
-        <ActionBar
-          selectedPerson={selectedPerson}
-          onAdd={(kind) => setActiveDialog({ type: "add", kind })}
-          onDelete={() => setActiveDialog({ type: "delete" })}
-        />
-      )}
-      {activeDialog?.type === "add" && selectedPerson && (
-        <AddRelationshipDialog
-          key={activeDialog.kind}
-          kind={activeDialog.kind}
-          selectedPerson={selectedPerson}
-          partners={selectedPersonPartners}
-          onClose={() => setActiveDialog(null)}
-          onCreated={(newPersonId) => {
-            setActiveDialog(null);
-            setSelectedPersonId(newPersonId);
-          }}
-        />
-      )}
-      {activeDialog?.type === "delete" && selectedPerson && (
-        <DeletePersonDialog
-          person={selectedPerson}
-          onClose={() => setActiveDialog(null)}
-          onDeleted={() => {
-            setActiveDialog(null);
-            setSelectedPersonId(null);
-          }}
         />
       )}
     </div>

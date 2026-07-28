@@ -57,7 +57,7 @@ export function DetailPanel({
     .filter((x): x is { other: Person; label: string } => x !== null);
 
   return (
-    <aside className="absolute right-0 top-0 h-full w-96 overflow-y-auto border-l border-line bg-surface p-6 shadow-lg">
+    <aside className="fixed inset-0 z-30 h-full w-full overflow-y-auto bg-surface p-6 sm:static sm:z-auto sm:w-96 sm:shrink-0 sm:border-l sm:border-line sm:shadow-lg">
       <button onClick={onClose} className="text-sm text-muted hover:text-foreground" aria-label="Lukk">
         Lukk ✕
       </button>
