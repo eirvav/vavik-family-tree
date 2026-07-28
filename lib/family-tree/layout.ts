@@ -104,6 +104,40 @@ function orderGroupMembers(members: string[], relationships: Relationship[]): st
   return ordered;
 }
 
+// Computes how much horizontal width a group's entire descendant subtree
+// needs — not just the group's own width. A group with children whose
+// combined width exceeds the group's own width (e.g. a couple with three
+// children together, needing more room than the couple's own 2-person
+// box) must reserve that larger amount, or Dagre has no way to know to
+// keep a neighboring branch from encroaching on it. Memoized because the
+// same group can appear as a "child" under more than one parent group in
+// blended-family cases (see the doc comment on computeDagreLayout).
+function computeSubtreeWidth(
+  groupId: string,
+  ownWidth: Map<string, number>,
+  childrenByGroup: Map<string, Set<string>>,
+  cache: Map<string, number>
+): number {
+  const cached = cache.get(groupId);
+  if (cached !== undefined) return cached;
+
+  const own = ownWidth.get(groupId)!;
+  const children = childrenByGroup.get(groupId);
+  let width = own;
+  if (children && children.size > 0) {
+    const childrenTotal =
+      [...children].reduce(
+        (sum, childId) => sum + computeSubtreeWidth(childId, ownWidth, childrenByGroup, cache),
+        0
+      ) +
+      (children.size - 1) * NODE_GAP;
+    width = Math.max(own, childrenTotal);
+  }
+
+  cache.set(groupId, width);
+  return width;
+}
+
 /**
  * Computes a top-to-bottom generational layout for the family tree using
  * Dagre. Parent-child edges drive the ranking (who's above whom) with
@@ -130,6 +164,16 @@ function orderGroupMembers(members: string[], relationships: Relationship[]): st
  * its individual members. After layout, each composite node is expanded
  * back into its members, laid out side by side (sharing the composite's y)
  * so they land on the same rank and end up adjacent.
+ *
+ * Each group's declared Dagre width is not just its own width, though —
+ * it's the width of its entire descendant subtree (computeSubtreeWidth),
+ * so a branch whose children collectively need more room than the branch
+ * itself doesn't get an undersized column and overlap its neighbor. A
+ * child with two parents in different, unconnected groups (e.g. separated
+ * parents with no relationship recorded between them) has its width
+ * counted by both parent groups independently — a conservative,
+ * redundant over-reservation rather than a tight optimum, which is safe
+ * (extra whitespace) where under-reservation would be the bug.
  *
  * Pure function: takes the full people/relationship lists and returns a map of
  * person id -> computed {x, y}.
@@ -175,11 +219,19 @@ export function computeDagreLayout(
   graph.setGraph({ rankdir: "TB", nodesep: NODE_GAP, ranksep: 100 });
   graph.setDefaultEdgeLabel(() => ({}));
 
+  // Each group's own width (just the group's own members, no descendants) —
+  // used both as the base case for computeSubtreeWidth and, unchanged from
+  // before, to expand a group's assigned position back into its individual
+  // members' x positions.
+  const ownWidth = new Map<string, number>();
   for (const [groupId, members] of groups) {
-    const width = members.length * NODE_WIDTH + (members.length - 1) * NODE_GAP;
-    graph.setNode(groupId, { width, height: NODE_HEIGHT });
+    ownWidth.set(groupId, members.length * NODE_WIDTH + (members.length - 1) * NODE_GAP);
   }
 
+  // groupId -> set of child group ids (deduplicated — a child with two
+  // parents in the same group would otherwise redirect two separate
+  // parent-child relationship rows onto the same from/to pair).
+  const childrenByGroup = new Map<string, Set<string>>();
   for (const rel of relationships) {
     if (!PARENT_TYPES.has(rel.relationship_type)) continue;
     const from = dagreNodeIdFor.get(rel.person_a_id)!;
@@ -188,7 +240,22 @@ export function computeDagreLayout(
     // pairing two "siblings" who also have a parent-child edge on file) —
     // skip rather than create a self-loop Dagre can't rank.
     if (from === to) continue;
-    graph.setEdge(from, to);
+    if (!childrenByGroup.has(from)) childrenByGroup.set(from, new Set());
+    childrenByGroup.get(from)!.add(to);
+  }
+
+  const subtreeWidthCache = new Map<string, number>();
+  for (const [groupId] of groups) {
+    graph.setNode(groupId, {
+      width: computeSubtreeWidth(groupId, ownWidth, childrenByGroup, subtreeWidthCache),
+      height: NODE_HEIGHT,
+    });
+  }
+
+  for (const [from, children] of childrenByGroup) {
+    for (const to of children) {
+      graph.setEdge(from, to);
+    }
   }
 
   dagre.layout(graph);
@@ -196,7 +263,7 @@ export function computeDagreLayout(
   const result = new Map<string, { x: number; y: number }>();
   for (const [groupId, members] of groups) {
     const node = graph.node(groupId);
-    const totalWidth = members.length * NODE_WIDTH + (members.length - 1) * NODE_GAP;
+    const totalWidth = ownWidth.get(groupId)!;
     let x = node.x - totalWidth / 2 + NODE_WIDTH / 2;
     for (const id of members) {
       result.set(id, { x, y: node.y });

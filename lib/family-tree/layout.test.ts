@@ -125,3 +125,53 @@ test("doesn't crash on a parent-child edge between two people already collapsed 
   expect(layout.get("a")!.y).toBe(layout.get("b")!.y);
   expect(layout.get("a")!.x).not.toBe(layout.get("b")!.x);
 });
+
+test("reserves enough width for a wide branch so it doesn't overlap its neighbor", () => {
+  // topA+topB have two children, b1a and b2a. b1a partners with b1b and
+  // they have THREE children together (needing more width than b1a+b1b's
+  // own 2-person box); b2a partners with b2b and they have only one child.
+  // This is the exact shape of the confirmed overlap bug: b1's branch
+  // needs 3*200+2*40=680px for its children, more than its own 440px.
+  const topA = makePerson("topA", "TopA");
+  const topB = makePerson("topB", "TopB");
+  const b1a = makePerson("b1a", "B1A");
+  const b1b = makePerson("b1b", "B1B");
+  const b2a = makePerson("b2a", "B2A");
+  const b2b = makePerson("b2b", "B2B");
+  const c1 = makePerson("c1", "C1");
+  const c2 = makePerson("c2", "C2");
+  const c3 = makePerson("c3", "C3");
+  const c4 = makePerson("c4", "C4");
+  const people = [topA, topB, b1a, b1b, b2a, b2b, c1, c2, c3, c4];
+  const relationships = [
+    makeRelationship("r1", "topA", "topB", "spouse"),
+    makeRelationship("r2", "topA", "b1a", "biological_parent"),
+    makeRelationship("r3", "topB", "b1a", "biological_parent"),
+    makeRelationship("r4", "topA", "b2a", "biological_parent"),
+    makeRelationship("r5", "topB", "b2a", "biological_parent"),
+    makeRelationship("r6", "b1a", "b1b", "spouse"),
+    makeRelationship("r7", "b2a", "b2b", "spouse"),
+    makeRelationship("r8", "b1a", "c1", "biological_parent"),
+    makeRelationship("r9", "b1b", "c1", "biological_parent"),
+    makeRelationship("r10", "b1a", "c2", "biological_parent"),
+    makeRelationship("r11", "b1b", "c2", "biological_parent"),
+    makeRelationship("r12", "b1a", "c3", "biological_parent"),
+    makeRelationship("r13", "b1b", "c3", "biological_parent"),
+    makeRelationship("r14", "b2a", "c4", "biological_parent"),
+    makeRelationship("r15", "b2b", "c4", "biological_parent"),
+  ];
+
+  const layout = computeDagreLayout(people, relationships);
+
+  // All four grandchildren are at the same rank. With a uniform node width
+  // of 200px, no two of them should be closer than 200px center-to-center
+  // — anything less means their boxes overlap.
+  const grandchildren = ["c1", "c2", "c3", "c4"];
+  for (let i = 0; i < grandchildren.length; i++) {
+    for (let j = i + 1; j < grandchildren.length; j++) {
+      const xi = layout.get(grandchildren[i])!.x;
+      const xj = layout.get(grandchildren[j])!.x;
+      expect(Math.abs(xi - xj)).toBeGreaterThanOrEqual(200);
+    }
+  }
+});
