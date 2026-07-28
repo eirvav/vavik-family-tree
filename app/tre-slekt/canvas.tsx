@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
-import type { Node } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
 import { DetailPanel } from "./detail-panel";
@@ -39,6 +39,37 @@ const RELATIONSHIP_LABELS: Partial<Record<Relationship["relationship_type"], str
   former_partner: "tidligere partner",
 };
 
+function buildNodes(people: Person[], dagreLayout: Map<string, { x: number; y: number }>) {
+  return people.map((person) => ({
+    id: person.id,
+    type: "person",
+    position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
+    data: { person },
+  }));
+}
+
+function buildEdges(relationships: Relationship[]) {
+  return relationships.map((rel) => {
+    const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
+    const isPartnerEdge = PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type);
+    const label = RELATIONSHIP_LABELS[rel.relationship_type];
+
+    return {
+      id: rel.id,
+      source: rel.person_a_id,
+      target: rel.person_b_id,
+      ...(isParentEdge && {
+        type: "smoothstep",
+        markerEnd: { type: MarkerType.ArrowClosed },
+      }),
+      ...(isPartnerEdge && {
+        style: { strokeDasharray: "5,5" },
+      }),
+      ...(label && { label }),
+    };
+  });
+}
+
 export function FamilyTreeCanvas({
   people,
   relationships,
@@ -62,37 +93,14 @@ export function FamilyTreeCanvas({
   >(null);
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
+  const selectedPerson = selectedPersonId ? peopleById.get(selectedPersonId) : undefined;
   const dagreLayout = computeDagreLayout(people, relationships, orientation);
 
-  const initialNodes = people.map((person) => ({
-    id: person.id,
-    type: "person",
-    position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
-    data: { person },
-  }));
-
-  const initialEdges = relationships.map((rel) => {
-    const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
-    const isPartnerEdge = PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type);
-    const label = RELATIONSHIP_LABELS[rel.relationship_type];
-
-    return {
-      id: rel.id,
-      source: rel.person_a_id,
-      target: rel.person_b_id,
-      ...(isParentEdge && {
-        type: "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed },
-      }),
-      ...(isPartnerEdge && {
-        style: { strokeDasharray: "5,5" },
-      }),
-      ...(label && { label }),
-    };
-  });
+  const initialNodes = buildNodes(people, dagreLayout);
+  const initialEdges = buildEdges(relationships);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);
@@ -128,6 +136,7 @@ export function FamilyTreeCanvas({
           orientation={orientation}
           dagreLayout={dagreLayout}
           setNodes={setNodes}
+          setEdges={setEdges}
         />
         <SearchBar
           searchQuery={searchQuery}
@@ -139,9 +148,9 @@ export function FamilyTreeCanvas({
           onSelectPerson={handleSelectPerson}
         />
       </ReactFlow>
-      {selectedPersonId && (
+      {selectedPerson && (
         <DetailPanel
-          person={peopleById.get(selectedPersonId)!}
+          person={selectedPerson}
           relationships={relationships}
           peopleById={peopleById}
           canEdit={canEdit}
@@ -150,19 +159,19 @@ export function FamilyTreeCanvas({
           onSelectPerson={handleSelectPerson}
         />
       )}
-      {isAdmin && selectedPersonId && (
+      {isAdmin && selectedPerson && (
         <ActionBar
-          selectedPerson={peopleById.get(selectedPersonId)!}
+          selectedPerson={selectedPerson}
           relationships={relationships}
           onAdd={(kind) => setActiveDialog({ type: "add", kind })}
           onDelete={() => setActiveDialog({ type: "delete" })}
         />
       )}
-      {activeDialog?.type === "add" && selectedPersonId && (
+      {activeDialog?.type === "add" && selectedPerson && (
         <AddRelationshipDialog
           key={activeDialog.kind}
           kind={activeDialog.kind}
-          selectedPerson={peopleById.get(selectedPersonId)!}
+          selectedPerson={selectedPerson}
           onClose={() => setActiveDialog(null)}
           onCreated={(newPersonId) => {
             setActiveDialog(null);
@@ -170,9 +179,9 @@ export function FamilyTreeCanvas({
           }}
         />
       )}
-      {activeDialog?.type === "delete" && selectedPersonId && (
+      {activeDialog?.type === "delete" && selectedPerson && (
         <DeletePersonDialog
-          person={peopleById.get(selectedPersonId)!}
+          person={selectedPerson}
           onClose={() => setActiveDialog(null)}
           onDeleted={() => {
             setActiveDialog(null);
@@ -190,25 +199,29 @@ function OrientationEffectHandler({
   orientation,
   dagreLayout,
   setNodes,
+  setEdges,
 }: {
   people: Person[];
   relationships: Relationship[];
   orientation: "tb" | "lr";
   dagreLayout: Map<string, { x: number; y: number }>;
   setNodes: Dispatch<SetStateAction<Node[]>>;
+  setEdges: Dispatch<SetStateAction<Edge[]>>;
 }) {
   const reactFlow = useReactFlow();
+  const previousOrientation = useRef(orientation);
 
   useEffect(() => {
-    setNodes(
-      people.map((person) => ({
-        id: person.id,
-        type: "person",
-        position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
-        data: { person },
-      }))
-    );
-    void reactFlow.fitView({ duration: 500 });
+    setNodes(buildNodes(people, dagreLayout));
+    setEdges(buildEdges(relationships) as Edge[]);
+    // Only re-fit the camera when orientation itself changed — an ordinary
+    // data refresh (add/edit/delete a person) must not reset the admin's
+    // pan/zoom, only actually re-laying the tree out top-to-bottom vs.
+    // left-to-right should.
+    if (previousOrientation.current !== orientation) {
+      void reactFlow.fitView({ duration: 500 });
+      previousOrientation.current = orientation;
+    }
     // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
     // which is recomputed fresh every render and would make this loop) —
     // their reference only changes when the server data actually changes

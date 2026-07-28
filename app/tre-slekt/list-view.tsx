@@ -41,6 +41,7 @@ export function ListView({
   const sorted = [...filtered].sort((a, b) => a.family_name.localeCompare(b.family_name, "nb"));
   const groups = groupByFamilyNameInitial(sorted);
   const peopleById = new Map(people.map((p) => [p.id, p]));
+  const selectedPerson = selectedPersonId ? peopleById.get(selectedPersonId) : undefined;
 
   const handleSelectPerson = (personId: string) => {
     setSelectedPersonId(personId);
@@ -115,9 +116,9 @@ export function ListView({
           ))}
         </div>
       </div>
-      {selectedPersonId && (
+      {selectedPerson && (
         <DetailPanel
-          person={peopleById.get(selectedPersonId)!}
+          person={selectedPerson}
           relationships={relationships}
           peopleById={peopleById}
           canEdit={canEdit}
