@@ -4,6 +4,7 @@ export type Person = {
   id: string;
   given_name: string;
   family_name: string;
+  birth_family_name: string | null;
   gender: "male" | "female" | "unknown";
   is_living: boolean;
   birth_date_display: string | null;
@@ -34,7 +35,9 @@ export async function getFamilyTreeData() {
   const [peopleResult, relationshipsResult] = await Promise.all([
     supabase
       .from("people")
-      .select("id, given_name, family_name, gender, is_living, birth_date_display, death_date_display, biography, birth_place, death_place")
+      .select(
+        "id, given_name, family_name, birth_family_name, gender, is_living, birth_date_display, death_date_display, biography, birth_place, death_place"
+      )
       .is("deleted_at", null),
     supabase
       .from("relationships")
