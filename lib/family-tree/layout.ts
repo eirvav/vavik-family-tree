@@ -116,10 +116,19 @@ function computeSubtreeWidth(
   groupId: string,
   ownWidth: Map<string, number>,
   childrenByGroup: Map<string, Set<string>>,
-  cache: Map<string, number>
+  cache: Map<string, number>,
+  inProgress: Set<string> = new Set()
 ): number {
   const cached = cache.get(groupId);
   if (cached !== undefined) return cached;
+
+  // Cyclic group graph (possible from a sibling edge that connects an
+  // ancestor group to a descendant group — no person-level ancestry check
+  // rejects this, since it only looks at parent-child chains, not what
+  // happens after siblings/partners collapse into shared groups) — fall
+  // back to own width rather than recursing forever.
+  if (inProgress.has(groupId)) return ownWidth.get(groupId)!;
+  inProgress.add(groupId);
 
   const own = ownWidth.get(groupId)!;
   const children = childrenByGroup.get(groupId);
@@ -127,13 +136,15 @@ function computeSubtreeWidth(
   if (children && children.size > 0) {
     const childrenTotal =
       [...children].reduce(
-        (sum, childId) => sum + computeSubtreeWidth(childId, ownWidth, childrenByGroup, cache),
+        (sum, childId) =>
+          sum + computeSubtreeWidth(childId, ownWidth, childrenByGroup, cache, inProgress),
         0
       ) +
       (children.size - 1) * NODE_GAP;
     width = Math.max(own, childrenTotal);
   }
 
+  inProgress.delete(groupId);
   cache.set(groupId, width);
   return width;
 }

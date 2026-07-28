@@ -126,6 +126,27 @@ test("doesn't crash on a parent-child edge between two people already collapsed 
   expect(layout.get("a")!.x).not.toBe(layout.get("b")!.x);
 });
 
+test("doesn't crash on a group-level cycle formed by collapsing a sibling edge (no person-level ancestry cycle exists)", () => {
+  // A and B are siblings, so they collapse into one composite group, G1.
+  // A is a biological_parent of C (its own group, G2), and C is a
+  // biological_parent of B. Person-level ancestry is A -> C -> B, with no
+  // cycle (B is never an ancestor of A), so the DB's ancestry-cycle trigger
+  // would accept every one of these rows. But at the GROUP level this forms
+  // G1 -> G2 -> G1: a cycle computeSubtreeWidth's recursion has to detect,
+  // or it recurses forever and blows the call stack.
+  const a = makePerson("a", "A");
+  const b = makePerson("b", "B");
+  const c = makePerson("c", "C");
+  const people = [a, b, c];
+  const relationships = [
+    makeRelationship("r1", "a", "b", "sibling"),
+    makeRelationship("r2", "a", "c", "biological_parent"),
+    makeRelationship("r3", "c", "b", "biological_parent"),
+  ];
+
+  expect(() => computeDagreLayout(people, relationships)).not.toThrow();
+});
+
 test("reserves enough width for a wide branch so its column doesn't overlap its neighbor's", () => {
   // topA+topB have two children, b1a and b2a. b1a partners with b1b and
   // they have THREE children together (needing more width than b1a+b1b's
