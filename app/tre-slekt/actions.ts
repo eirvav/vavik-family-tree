@@ -31,7 +31,7 @@ async function requireAdmin() {
     return { ok: false as const, error: "Kun administratorer kan gjøre dette." };
   }
 
-  return { ok: true as const, supabase };
+  return { ok: true as const, supabase, user };
 }
 
 export async function createRelatedPerson(input: {
@@ -113,12 +113,23 @@ export async function updatePersonInfo(input: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const authCheck = await requireAdmin();
   if (!authCheck.ok) return authCheck;
-  const { supabase } = authCheck;
+  const { supabase, user } = authCheck;
 
   const givenName = input.givenName.trim();
   const familyName = input.familyName.trim();
   if (!givenName || !familyName) {
     return { ok: false, error: "Fornavn og etternavn må fylles ut." };
+  }
+
+  const { data: current, error: fetchError } = await supabase
+    .from("people")
+    .select("version")
+    .eq("id", input.personId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (fetchError || !current) {
+    return { ok: false, error: "Fant ikke personen." };
   }
 
   const { error } = await supabase
@@ -131,8 +142,12 @@ export async function updatePersonInfo(input: {
       birth_date_display: input.birthDateDisplay.trim() || null,
       is_living: input.isLiving,
       death_date_display: input.isLiving ? null : input.deathDateDisplay.trim() || null,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id,
+      version: current.version + 1,
     })
-    .eq("id", input.personId);
+    .eq("id", input.personId)
+    .is("deleted_at", null);
 
   if (error) {
     return { ok: false, error: "Kunne ikke lagre personinfo." };
