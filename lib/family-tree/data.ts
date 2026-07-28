@@ -26,7 +26,8 @@ export type Relationship = {
     | "spouse"
     | "former_spouse"
     | "partner"
-    | "former_partner";
+    | "former_partner"
+    | "sibling";
 };
 
 export async function getFamilyTreeData() {

@@ -14,6 +14,7 @@ const RELATIONSHIP_LABEL_NO: Record<Relationship["relationship_type"], { asParen
   former_spouse: { asParent: "tidligere ektefelle", asChild: "tidligere ektefelle" },
   partner: { asParent: "partner", asChild: "partner" },
   former_partner: { asParent: "tidligere partner", asChild: "tidligere partner" },
+  sibling: { asParent: "søsken", asChild: "søsken" },
 };
 
 const GENDER_LABEL_NO: Record<Person["gender"], string> = {

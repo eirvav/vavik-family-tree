@@ -98,3 +98,18 @@ test("allows deleting one of two parents who share a child (redundant connection
   const result = checkDeleteConnectivity(people, relationships, "father");
   expect(result.safe).toBe(true);
 });
+
+test("treats a sibling-only link as a real connection for connectivity purposes", () => {
+  const a = makePerson("a", "A");
+  const b = makePerson("b", "B");
+  const c = makePerson("c", "C");
+  const people = [a, b, c];
+  const relationships = [
+    makeRelationship("r1", "a", "b", "sibling"),
+    makeRelationship("r2", "b", "c", "sibling"),
+  ];
+
+  // b is a bridge between a and c, purely via sibling edges.
+  const result = checkDeleteConnectivity(people, relationships, "b");
+  expect(result.safe).toBe(false);
+});
