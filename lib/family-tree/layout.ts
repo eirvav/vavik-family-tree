@@ -59,6 +59,51 @@ class UnionFind {
   }
 }
 
+// Orders a group's members by a deterministic depth-first traversal over
+// the group's own internal adjacency edges (ADJACENCY_TYPES relationships
+// where both ends are in this group), so directly-connected people (e.g.
+// two siblings, or a couple) end up next to each other in the final
+// left-to-right position — not just on the same rank. Iterating `people`
+// array order alone (how membership itself is determined) says nothing
+// about adjacency within the group.
+//
+// This is a best-effort linearization: a "star" topology (one hub person
+// directly linked to three-or-more others who aren't linked to each
+// other) can't have every pair adjacent in a 1D layout no matter the
+// ordering — that's a structural limit of laying out a graph on a line,
+// not a bug. DFS still correctly handles the common chain/pair cases
+// (couples, couples-with-shared-children, sibling pairs) exactly.
+function orderGroupMembers(members: string[], relationships: Relationship[]): string[] {
+  const memberSet = new Set(members);
+  const adjacency = new Map<string, string[]>();
+  for (const id of members) adjacency.set(id, []);
+  for (const rel of relationships) {
+    if (!ADJACENCY_TYPES.has(rel.relationship_type)) continue;
+    if (!memberSet.has(rel.person_a_id) || !memberSet.has(rel.person_b_id)) continue;
+    adjacency.get(rel.person_a_id)!.push(rel.person_b_id);
+    adjacency.get(rel.person_b_id)!.push(rel.person_a_id);
+  }
+
+  const visited = new Set<string>();
+  const ordered: string[] = [];
+  for (const start of members) {
+    if (visited.has(start)) continue;
+    const stack = [start];
+    while (stack.length > 0) {
+      const current = stack.pop()!;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      ordered.push(current);
+      const neighbors = adjacency.get(current)!;
+      // Push in reverse so the stack (LIFO) visits them in original order.
+      for (let i = neighbors.length - 1; i >= 0; i--) {
+        if (!visited.has(neighbors[i])) stack.push(neighbors[i]);
+      }
+    }
+  }
+  return ordered;
+}
+
 /**
  * Computes a top-to-bottom generational layout for the family tree using
  * Dagre. Parent-child edges drive the ranking (who's above whom) with
@@ -109,6 +154,14 @@ export function computeDagreLayout(
     const members = groups.get(groupId);
     if (members) members.push(person.id);
     else groups.set(groupId, [person.id]);
+  }
+
+  // Re-order each group's members by adjacency (see orderGroupMembers) —
+  // the loop above only determined group MEMBERSHIP, not visual order.
+  for (const [groupId, members] of groups) {
+    if (members.length > 1) {
+      groups.set(groupId, orderGroupMembers(members, relationships));
+    }
   }
 
   // person id -> id of the Dagre node that represents them (their own id if

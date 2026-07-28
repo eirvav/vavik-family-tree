@@ -81,7 +81,7 @@ export function AddRelationshipDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-foreground/20 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-2xl border border-line bg-surface p-6 shadow-lg">
         <h2 className="font-serif text-lg font-medium text-foreground">{KIND_LABEL_NO[kind]}</h2>
         {error && <p className="mt-3 text-sm text-error">{error}</p>}

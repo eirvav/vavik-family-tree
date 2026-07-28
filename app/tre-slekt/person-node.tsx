@@ -9,8 +9,8 @@ export const GENDER_ICON: Record<Person["gender"], string> = {
   unknown: "•",
 };
 
-export function PersonNode({ data, selected }: { data: { person: Person }; selected?: boolean }) {
-  const { person } = data;
+export function PersonNode({ data }: { data: { person: Person; selected?: boolean } }) {
+  const { person, selected } = data;
   const years = [person.birth_date_display, person.death_date_display].filter(Boolean).join(" – ");
 
   return (

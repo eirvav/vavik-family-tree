@@ -49,8 +49,7 @@ function buildNodes(
     id: person.id,
     type: "person",
     position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
-    selected: person.id === selectedPersonId,
-    data: { person },
+    data: { person, selected: person.id === selectedPersonId },
   }));
 }
 
@@ -153,6 +152,7 @@ export function FamilyTreeCanvas({
           onEdgesChange={onEdgesChange}
           onNodeClick={handleNodeClick}
           nodesDraggable={false}
+          elementsSelectable={false}
           fitView
         >
           <Background />
