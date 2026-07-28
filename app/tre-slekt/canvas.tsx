@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import type { Edge, Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -75,13 +75,11 @@ export function FamilyTreeCanvas({
   relationships,
   canEdit,
   isAdmin,
-  orientation,
 }: {
   people: Person[];
   relationships: Relationship[];
   canEdit: boolean;
   isAdmin: boolean;
-  orientation: "tb" | "lr";
 }) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,13 +92,25 @@ export function FamilyTreeCanvas({
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
   const selectedPerson = selectedPersonId ? peopleById.get(selectedPersonId) : undefined;
-  const dagreLayout = computeDagreLayout(people, relationships, orientation);
+  const dagreLayout = computeDagreLayout(people, relationships);
 
   const initialNodes = buildNodes(people, dagreLayout);
   const initialEdges = buildEdges(relationships);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
+
+  useEffect(() => {
+    setNodes(buildNodes(people, dagreLayout));
+    setEdges(buildEdges(relationships) as Edge[]);
+    // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
+    // which is recomputed fresh every render and would make this loop) —
+    // their reference only changes when the server data actually changes,
+    // via router.refresh(). No camera fitView call here: mutations must
+    // never reset the admin's pan/zoom; the `<ReactFlow fitView>` prop
+    // below already handles the initial camera fit on first mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [people, relationships]);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);
@@ -130,14 +140,6 @@ export function FamilyTreeCanvas({
       >
         <Background />
         <Controls />
-        <OrientationEffectHandler
-          people={people}
-          relationships={relationships}
-          orientation={orientation}
-          dagreLayout={dagreLayout}
-          setNodes={setNodes}
-          setEdges={setEdges}
-        />
         <SearchBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -191,45 +193,6 @@ export function FamilyTreeCanvas({
       )}
     </div>
   );
-}
-
-function OrientationEffectHandler({
-  people,
-  relationships,
-  orientation,
-  dagreLayout,
-  setNodes,
-  setEdges,
-}: {
-  people: Person[];
-  relationships: Relationship[];
-  orientation: "tb" | "lr";
-  dagreLayout: Map<string, { x: number; y: number }>;
-  setNodes: Dispatch<SetStateAction<Node[]>>;
-  setEdges: Dispatch<SetStateAction<Edge[]>>;
-}) {
-  const reactFlow = useReactFlow();
-  const previousOrientation = useRef(orientation);
-
-  useEffect(() => {
-    setNodes(buildNodes(people, dagreLayout));
-    setEdges(buildEdges(relationships) as Edge[]);
-    // Only re-fit the camera when orientation itself changed — an ordinary
-    // data refresh (add/edit/delete a person) must not reset the admin's
-    // pan/zoom, only actually re-laying the tree out top-to-bottom vs.
-    // left-to-right should.
-    if (previousOrientation.current !== orientation) {
-      void reactFlow.fitView({ duration: 500 });
-      previousOrientation.current = orientation;
-    }
-    // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
-    // which is recomputed fresh every render and would make this loop) —
-    // their reference only changes when the server data actually changes
-    // (via router.refresh()), or when the user toggles orientation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orientation, people, relationships]);
-
-  return null;
 }
 
 function SearchBar({
