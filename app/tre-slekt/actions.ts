@@ -12,7 +12,7 @@ const PARENT_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
   "guardian_parent",
 ]);
 
-type RelationKind = "father" | "mother" | "sibling" | "partner" | "child";
+type RelationKind = "sibling" | "partner" | "child";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -56,10 +56,7 @@ export async function createRelatedPerson(input: {
   type Edge = { other_person_id: string; relationship_type: string; new_person_is_a: boolean };
   let edges: Edge[];
 
-  if (input.kind === "father" || input.kind === "mother") {
-    // New person is the parent (person_a); the selected person is the child (person_b).
-    edges = [{ other_person_id: input.selectedPersonId, relationship_type: input.relationshipType, new_person_is_a: true }];
-  } else if (input.kind === "child") {
+  if (input.kind === "child") {
     // Selected person is the parent (person_a); the new person is the child (person_b).
     edges = [{ other_person_id: input.selectedPersonId, relationship_type: input.relationshipType, new_person_is_a: false }];
     if (input.secondParentId) {
@@ -209,6 +206,44 @@ export async function deletePerson(personId: string): Promise<{ ok: true } | { o
   const { error } = await supabase.rpc("delete_person", { p_person_id: personId });
   if (error) {
     return { ok: false, error: "Sletting feilet." };
+  }
+
+  return { ok: true };
+}
+
+export async function createParentPair(input: {
+  childId: string;
+  fatherGivenName: string;
+  fatherFamilyName: string;
+  motherGivenName: string;
+  motherFamilyName: string;
+  parentRelationshipType: string;
+  partnerRelationshipType: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const authCheck = await requireAdmin();
+  if (!authCheck.ok) return authCheck;
+  const { supabase } = authCheck;
+
+  const fatherGivenName = input.fatherGivenName.trim();
+  const fatherFamilyName = input.fatherFamilyName.trim();
+  const motherGivenName = input.motherGivenName.trim();
+  const motherFamilyName = input.motherFamilyName.trim();
+  if (!fatherGivenName || !fatherFamilyName || !motherGivenName || !motherFamilyName) {
+    return { ok: false, error: "Alle navnefelt må fylles ut." };
+  }
+
+  const { error } = await supabase.rpc("create_parent_pair", {
+    p_father_given_name: fatherGivenName,
+    p_father_family_name: fatherFamilyName,
+    p_mother_given_name: motherGivenName,
+    p_mother_family_name: motherFamilyName,
+    p_parent_relationship_type: input.parentRelationshipType,
+    p_partner_relationship_type: input.partnerRelationshipType,
+    p_child_id: input.childId,
+  });
+
+  if (error) {
+    return { ok: false, error: "Kunne ikke opprette foreldrene." };
   }
 
   return { ok: true };
