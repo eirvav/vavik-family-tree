@@ -40,11 +40,16 @@ const RELATIONSHIP_LABELS: Partial<Record<Relationship["relationship_type"], str
   sibling: "søsken",
 };
 
-function buildNodes(people: Person[], dagreLayout: Map<string, { x: number; y: number }>) {
+function buildNodes(
+  people: Person[],
+  dagreLayout: Map<string, { x: number; y: number }>,
+  selectedPersonId: string | null
+) {
   return people.map((person) => ({
     id: person.id,
     type: "person",
     position: dagreLayout.get(person.id) ?? { x: 0, y: 0 },
+    selected: person.id === selectedPersonId,
     data: { person },
   }));
 }
@@ -105,14 +110,14 @@ export function FamilyTreeCanvas({
     : [];
   const dagreLayout = computeDagreLayout(people, relationships);
 
-  const initialNodes = buildNodes(people, dagreLayout);
+  const initialNodes = buildNodes(people, dagreLayout, selectedPersonId);
   const initialEdges = buildEdges(relationships);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   useEffect(() => {
-    setNodes(buildNodes(people, dagreLayout));
+    setNodes(buildNodes(people, dagreLayout, selectedPersonId));
     setEdges(buildEdges(relationships) as Edge[]);
     // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
     // which is recomputed fresh every render and would make this loop) —
@@ -121,7 +126,7 @@ export function FamilyTreeCanvas({
     // never reset the admin's pan/zoom; the `<ReactFlow fitView>` prop
     // below already handles the initial camera fit on first mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [people, relationships]);
+  }, [people, relationships, selectedPersonId]);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);

@@ -9,13 +9,17 @@ export const GENDER_ICON: Record<Person["gender"], string> = {
   unknown: "•",
 };
 
-export function PersonNode({ data }: { data: { person: Person } }) {
+export function PersonNode({ data, selected }: { data: { person: Person }; selected?: boolean }) {
   const { person } = data;
   const years = [person.birth_date_display, person.death_date_display].filter(Boolean).join(" – ");
 
   return (
     <div
-      className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 shadow-sm"
+      className={`flex items-center gap-2 rounded-xl border bg-surface px-3 py-2 transition-shadow ${
+        selected
+          ? "border-accent shadow-md ring-2 ring-accent ring-offset-2 ring-offset-background"
+          : "border-line shadow-sm"
+      }`}
       role="group"
       aria-label={`${person.given_name} ${person.family_name}${years ? `, ${years}` : ""}`}
     >
