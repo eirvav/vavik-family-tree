@@ -6,6 +6,8 @@ import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
 import { DetailPanel } from "./detail-panel";
+import { ActionBar } from "./action-bar";
+import { AddRelationshipDialog } from "./add-relationship-dialog";
 import { computeDagreLayout } from "@/lib/family-tree/layout";
 import { searchPeople } from "@/lib/family-tree/search";
 import type { Person, Relationship } from "@/lib/family-tree/data";
@@ -52,6 +54,11 @@ export function FamilyTreeCanvas({
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<
+    | { type: "add"; kind: "father" | "mother" | "sibling" | "partner" | "child" }
+    | { type: "delete" }
+    | null
+  >(null);
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
   const dagreLayout = computeDagreLayout(people, relationships, orientation);
@@ -140,6 +147,25 @@ export function FamilyTreeCanvas({
           isAdmin={isAdmin}
           onClose={handleClosePanel}
           onSelectPerson={handleSelectPerson}
+        />
+      )}
+      {isAdmin && selectedPersonId && (
+        <ActionBar
+          selectedPerson={peopleById.get(selectedPersonId)!}
+          relationships={relationships}
+          onAdd={(kind) => setActiveDialog({ type: "add", kind })}
+          onDelete={() => setActiveDialog({ type: "delete" })}
+        />
+      )}
+      {activeDialog?.type === "add" && selectedPersonId && (
+        <AddRelationshipDialog
+          kind={activeDialog.kind}
+          selectedPerson={peopleById.get(selectedPersonId)!}
+          onClose={() => setActiveDialog(null)}
+          onCreated={(newPersonId) => {
+            setActiveDialog(null);
+            setSelectedPersonId(newPersonId);
+          }}
         />
       )}
     </div>
