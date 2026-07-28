@@ -12,8 +12,8 @@ Each entry links to its design spec and implementation plan under `docs/superpow
 | 2. Core data model | ✅ Done | `people`, `relationships`, `person_names`; ancestry-cycle protection; trigram search. |
 | 3. Tree experience | ✅ Done | React Flow + Dagre canvas; search; detail panels; accessibility list view. |
 | 4a. Static layout rework | ✅ Done | Removed drag-to-reposition; orientation toggle (top-to-bottom / left-to-right); dark mode dropped. |
-| 4b. Editing (floating action bar) | ⬜ Not started | Add/edit/delete person; add father/mother/sibling/partner/child, via a Figma/tldraw-style floating bottom action bar. Next up. |
-| 5. Stories & avatars | ⬜ Not started | Stories/notes table for people; generated avatar system (not uploads, per spec). |
+| 4b. Editing (floating action bar) | ✅ Done | Admin-only floating action bar to add father/mother/sibling/partner/child; two-tab (Personinfo/Biografi) sidebar with inline editing; member biography-only editing; delete with a tree-connectivity check. |
+| 5. Stories & avatars | ⬜ Not started | Stories/notes table for people; generated avatar system (not uploads, per spec). Next up. |
 | 6. Administration | ⬜ Not started | Invitations, guest-code rotation UI, richer member management (currently create+list only). |
 | 7. Hardening | ⬜ Not started | Accessibility polish, performance, backups, monitoring. |
 
@@ -38,4 +38,4 @@ Each entry links to its design spec and implementation plan under `docs/superpow
 | 2 | [core-data-model-design.md](superpowers/specs/2026-07-27-core-data-model-design.md) | [core-data-model.md](superpowers/plans/2026-07-27-core-data-model.md) |
 | 3 | [tree-canvas-design.md](superpowers/specs/2026-07-27-tree-canvas-design.md) | [tree-canvas.md](superpowers/plans/2026-07-27-tree-canvas.md) |
 | 4a | [static-canvas-light-mode-design.md](superpowers/specs/2026-07-28-static-canvas-light-mode-design.md) | [static-canvas-light-mode.md](superpowers/plans/2026-07-28-static-canvas-light-mode.md) |
-| 4b | _not yet written_ | _not yet written_ |
+| 4b | [editing-floating-action-bar-design.md](superpowers/specs/2026-07-28-editing-floating-action-bar-design.md) | [editing-floating-action-bar.md](superpowers/plans/2026-07-28-editing-floating-action-bar.md) |
