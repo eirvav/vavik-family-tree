@@ -27,7 +27,7 @@ export function ActionBar({
   );
 
   return (
-    <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-surface p-1.5 shadow-lg">
+    <div className="absolute bottom-6 left-[calc(50%-12rem)] z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-surface p-1.5 shadow-lg">
       <ActionButton label="Legg til far" onClick={() => onAdd("father")} />
       <ActionButton label="Legg til mor" onClick={() => onAdd("mother")} />
       <ActionButton
