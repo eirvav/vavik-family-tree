@@ -16,8 +16,6 @@ A private, invite-only family tree web app for ~250 people (the Vavik family, No
 
 **Roles:** guest (family-code entry, read-only), member (password login, can edit), admin (password login, full control including member management and family-code rotation).
 
-**Data rules:** soft-deletion only for family data (`people`, `relationships`) — no hard DELETE policies except on `canvas_positions`, which is presentation state (not family data) and has a deliberate, documented admin-only hard-delete exception.
+**Data rules:** soft-deletion only for family data (`people`, `relationships`) — no hard DELETE policies anywhere in the current schema.
 
-**Shipped:** secure access (guest/member/admin auth), core data model (people/relationships/names with ancestry-cycle protection), and an interactive tree canvas (search, click-to-view detail panels, accessibility list view).
-
-Specs and plans live in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
+**Start here:** read `docs/ROADMAP.md` first in any fresh session — it tracks which phase this project is in, links to the detailed spec/plan for each phase, and lists standing directives and known outstanding items. Keep it updated when a phase ships.
