@@ -159,6 +159,7 @@ export function FamilyTreeCanvas({
       )}
       {activeDialog?.type === "add" && selectedPersonId && (
         <AddRelationshipDialog
+          key={activeDialog.kind}
           kind={activeDialog.kind}
           selectedPerson={peopleById.get(selectedPersonId)!}
           onClose={() => setActiveDialog(null)}
