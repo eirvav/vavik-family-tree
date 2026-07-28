@@ -86,9 +86,9 @@ export function DetailPanel({
       </div>
 
       {tab === "info" ? (
-        <PersonInfoTab person={person} isAdmin={isAdmin} related={related} onSelectPerson={onSelectPerson} />
+        <PersonInfoTab key={person.id} person={person} isAdmin={isAdmin} related={related} onSelectPerson={onSelectPerson} />
       ) : (
-        <BiographyTab person={person} canEdit={canEdit} />
+        <BiographyTab key={person.id} person={person} canEdit={canEdit} />
       )}
     </aside>
   );
