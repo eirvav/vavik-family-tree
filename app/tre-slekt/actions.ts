@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { Relationship } from "@/lib/family-tree/data";
+import { getFamilyTreeData } from "@/lib/family-tree/data";
+import { checkDeleteConnectivity } from "@/lib/family-tree/connectivity";
 
 const PARENT_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
   "biological_parent",
@@ -97,4 +99,94 @@ export async function createRelatedPerson(input: {
   }
 
   return { ok: true, newPersonId: newPersonId as string };
+}
+
+export async function updatePersonInfo(input: {
+  personId: string;
+  givenName: string;
+  familyName: string;
+  birthFamilyName: string;
+  gender: "male" | "female" | "unknown";
+  birthDateDisplay: string;
+  isLiving: boolean;
+  deathDateDisplay: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const authCheck = await requireAdmin();
+  if (!authCheck.ok) return authCheck;
+  const { supabase } = authCheck;
+
+  const givenName = input.givenName.trim();
+  const familyName = input.familyName.trim();
+  if (!givenName || !familyName) {
+    return { ok: false, error: "Fornavn og etternavn må fylles ut." };
+  }
+
+  const { error } = await supabase
+    .from("people")
+    .update({
+      given_name: givenName,
+      family_name: familyName,
+      birth_family_name: input.birthFamilyName.trim() || null,
+      gender: input.gender,
+      birth_date_display: input.birthDateDisplay.trim() || null,
+      is_living: input.isLiving,
+      death_date_display: input.isLiving ? null : input.deathDateDisplay.trim() || null,
+    })
+    .eq("id", input.personId);
+
+  if (error) {
+    return { ok: false, error: "Kunne ikke lagre personinfo." };
+  }
+
+  return { ok: true };
+}
+
+export async function updatePersonBiography(input: {
+  personId: string;
+  biography: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Ikke logget inn." };
+
+  const { error } = await supabase.rpc("update_person_biography", {
+    p_person_id: input.personId,
+    p_biography: input.biography.trim() || null,
+  });
+
+  if (error) {
+    return { ok: false, error: "Kunne ikke lagre biografien." };
+  }
+
+  return { ok: true };
+}
+
+export async function deletePerson(personId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const authCheck = await requireAdmin();
+  if (!authCheck.ok) return authCheck;
+  const { supabase } = authCheck;
+
+  const { people, relationships } = await getFamilyTreeData();
+  const target = people.find((p) => p.id === personId);
+  if (!target) {
+    return { ok: false, error: "Fant ikke personen." };
+  }
+
+  const check = checkDeleteConnectivity(people, relationships, personId);
+  if (!check.safe) {
+    const names = check.disconnectedPeople.map((p) => `${p.given_name} ${p.family_name}`).join(", ");
+    return {
+      ok: false,
+      error: `Kan ikke slette ${target.given_name} ${target.family_name} — ${names} ville da miste kontakt med resten av treet. Slett dem først.`,
+    };
+  }
+
+  const { error } = await supabase.rpc("delete_person", { p_person_id: personId });
+  if (error) {
+    return { ok: false, error: "Sletting feilet." };
+  }
+
+  return { ok: true };
 }
