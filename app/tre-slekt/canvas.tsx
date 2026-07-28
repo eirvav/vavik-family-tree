@@ -22,21 +22,22 @@ const PARENT_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
   "guardian_parent",
 ]);
 
+const CURRENT_PARTNER_TYPES = new Set<Relationship["relationship_type"]>(["spouse", "partner"]);
+const FORMER_PARTNER_TYPES = new Set<Relationship["relationship_type"]>(["former_spouse", "former_partner"]);
 const PARTNER_RELATIONSHIP_TYPES = new Set<Relationship["relationship_type"]>([
-  "spouse",
-  "former_spouse",
-  "partner",
-  "former_partner",
+  ...CURRENT_PARTNER_TYPES,
+  ...FORMER_PARTNER_TYPES,
 ]);
 
-// Norwegian labels shown on edges for relationship types that aren't the "default"
-// within their category (biological_parent / spouse need no label).
+// Norwegian labels shown on canvas edges for relationship types that
+// aren't self-evident from their line style. Current partnerships need no
+// label (solid line says "together"); former partnerships need no label
+// either (the dashed line alone says "this ended" — see buildEdges).
 const RELATIONSHIP_LABELS: Partial<Record<Relationship["relationship_type"], string>> = {
   adoptive_parent: "adoptivforelder",
   foster_parent: "fosterforelder",
   guardian_parent: "verge",
-  former_spouse: "tidligere ektefelle",
-  former_partner: "tidligere partner",
+  sibling: "søsken",
 };
 
 function buildNodes(people: Person[], dagreLayout: Map<string, { x: number; y: number }>) {
@@ -51,7 +52,7 @@ function buildNodes(people: Person[], dagreLayout: Map<string, { x: number; y: n
 function buildEdges(relationships: Relationship[]) {
   return relationships.map((rel) => {
     const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
-    const isPartnerEdge = PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type);
+    const isFormerPartnerEdge = FORMER_PARTNER_TYPES.has(rel.relationship_type);
     const label = RELATIONSHIP_LABELS[rel.relationship_type];
 
     return {
@@ -62,7 +63,7 @@ function buildEdges(relationships: Relationship[]) {
         type: "smoothstep",
         markerEnd: { type: MarkerType.ArrowClosed },
       }),
-      ...(isPartnerEdge && {
+      ...(isFormerPartnerEdge && {
         style: { strokeDasharray: "5,5" },
       }),
       ...(label && { label }),
