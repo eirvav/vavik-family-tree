@@ -8,6 +8,7 @@ import { PersonNode } from "./person-node";
 import { DetailPanel } from "./detail-panel";
 import { ActionBar } from "./action-bar";
 import { AddRelationshipDialog } from "./add-relationship-dialog";
+import { AddParentsDialog } from "./add-parents-dialog";
 import { DeletePersonDialog } from "./delete-person-dialog";
 import { computeDagreLayout } from "@/lib/family-tree/layout";
 import { searchPeople } from "@/lib/family-tree/search";
@@ -123,7 +124,8 @@ export function FamilyTreeCanvas({
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [activeDialog, setActiveDialog] = useState<
-    | { type: "add"; kind: "father" | "mother" | "sibling" | "partner" | "child" }
+    | { type: "add"; kind: "sibling" | "partner" | "child" }
+    | { type: "add-parents" }
     | { type: "delete" }
     | null
   >(null);
@@ -204,6 +206,7 @@ export function FamilyTreeCanvas({
           <ActionBar
             selectedPerson={selectedPerson}
             onAdd={(kind) => setActiveDialog({ type: "add", kind })}
+            onAddParents={() => setActiveDialog({ type: "add-parents" })}
             onDelete={() => setActiveDialog({ type: "delete" })}
           />
         )}
@@ -218,6 +221,13 @@ export function FamilyTreeCanvas({
               setActiveDialog(null);
               setSelectedPersonId(newPersonId);
             }}
+          />
+        )}
+        {activeDialog?.type === "add-parents" && selectedPerson && (
+          <AddParentsDialog
+            childId={selectedPerson.id}
+            onClose={() => setActiveDialog(null)}
+            onCreated={() => setActiveDialog(null)}
           />
         )}
         {activeDialog?.type === "delete" && selectedPerson && (

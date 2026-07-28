@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import type { Person } from "@/lib/family-tree/data";
 import { createRelatedPerson } from "./actions";
 
-type Kind = "father" | "mother" | "sibling" | "partner" | "child";
+type Kind = "sibling" | "partner" | "child";
 
 const KIND_LABEL_NO: Record<Kind, string> = {
-  father: "Legg til far",
-  mother: "Legg til mor",
   sibling: "Legg til søsken",
   partner: "Legg til partner",
   child: "Legg til barn",
@@ -48,11 +46,8 @@ export function AddRelationshipDialog({
 
   const [givenName, setGivenName] = useState("");
   const [familyName, setFamilyName] = useState(kind === "partner" ? "" : selectedPerson.family_name);
-  const [gender, setGender] = useState<Person["gender"]>(
-    kind === "father" ? "male" : kind === "mother" ? "female" : "unknown"
-  );
+  const [gender, setGender] = useState<Person["gender"]>("unknown");
 
-  const showGenderSelector = kind === "sibling" || kind === "partner" || kind === "child";
   const showTypeSelector = kind !== "sibling";
   const typeOptions = kind === "partner" ? PARTNER_TYPE_OPTIONS : PARENT_TYPE_OPTIONS;
   const [relationshipType, setRelationshipType] = useState(typeOptions[0].value);
@@ -104,20 +99,18 @@ export function AddRelationshipDialog({
             className="rounded-lg border border-line bg-background px-3 py-1.5 text-foreground"
           />
         </label>
-        {showGenderSelector && (
-          <label className="mt-3 flex flex-col gap-1 text-sm">
-            Kjønn
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value as Person["gender"])}
-              className="rounded-lg border border-line bg-background px-3 py-1.5 text-foreground"
-            >
-              <option value="male">Mann</option>
-              <option value="female">Kvinne</option>
-              <option value="unknown">Ikke oppgitt</option>
-            </select>
-          </label>
-        )}
+        <label className="mt-3 flex flex-col gap-1 text-sm">
+          Kjønn
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value as Person["gender"])}
+            className="rounded-lg border border-line bg-background px-3 py-1.5 text-foreground"
+          >
+            <option value="male">Mann</option>
+            <option value="female">Kvinne</option>
+            <option value="unknown">Ikke oppgitt</option>
+          </select>
+        </label>
         {showTypeSelector && (
           <label className="mt-3 flex flex-col gap-1 text-sm">
             Relasjonstype

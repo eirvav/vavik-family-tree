@@ -1,60 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import type { Person } from "@/lib/family-tree/data";
 
-type Kind = "father" | "mother" | "sibling" | "partner" | "child";
+type Kind = "sibling" | "partner" | "child";
 
 export function ActionBar({
   selectedPerson,
   onAdd,
+  onAddParents,
   onDelete,
 }: {
   selectedPerson: Person;
   onAdd: (kind: Kind) => void;
+  onAddParents: () => void;
   onDelete: () => void;
 }) {
-  const [showParentPopover, setShowParentPopover] = useState(false);
-
   return (
     <div
       className="fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-center gap-1 rounded-t-2xl border-t border-line bg-surface p-2 shadow-lg sm:absolute sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:z-10 sm:w-auto sm:-translate-x-1/2 sm:flex-nowrap sm:rounded-full sm:border sm:p-1.5"
       aria-label={`Handlinger for ${selectedPerson.given_name} ${selectedPerson.family_name}`}
     >
-      <div
-        className="relative"
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setShowParentPopover(false);
-        }}
-      >
-        <ActionButton
-          icon={<ParentIcon />}
-          label="Forelder"
-          onClick={() => setShowParentPopover((v) => !v)}
-        />
-        {showParentPopover && (
-          <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-lg">
-            <button
-              onClick={() => {
-                setShowParentPopover(false);
-                onAdd("father");
-              }}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-background"
-            >
-              <span aria-hidden="true">♂</span> Far
-            </button>
-            <button
-              onClick={() => {
-                setShowParentPopover(false);
-                onAdd("mother");
-              }}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-background"
-            >
-              <span aria-hidden="true">♀</span> Mor
-            </button>
-          </div>
-        )}
-      </div>
+      <ActionButton icon={<ParentIcon />} label="Foreldre" onClick={onAddParents} />
       <ActionButton icon={<SiblingIcon />} label="Søsken" onClick={() => onAdd("sibling")} />
       <ActionButton icon={<PartnerIcon />} label="Partner" onClick={() => onAdd("partner")} />
       <ActionButton icon={<ChildIcon />} label="Barn" onClick={() => onAdd("child")} />
