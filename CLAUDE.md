@@ -12,6 +12,10 @@ Never add a `Co-Authored-By: Claude` (or similar) trailer to commit messages in 
 
 Manage pushing, creating PRs, and merging autonomously in this repo — proceed without asking for confirmation on these specific actions. This does not relax the usual care around destructive operations (force-push, `--no-verify`, discarding uncommitted work): investigate and report those rather than acting unilaterally.
 
+# Keep this file (and AGENTS.md, ROADMAP.md) current
+
+Self-update these files without being asked whenever something durable changes: a new standing preference or correction the user gives, an architectural decision, a stack change, or a phase shipping. Don't wait for an explicit "update the docs" request — treat it as part of finishing the work. Fix stale info the moment you notice it (e.g. a removed feature still described as present) rather than leaving it for later. Keep additions short and factual; this file is instructions, not a changelog — narrative history belongs in commit messages and `docs/ROADMAP.md`'s phase links, not here.
+
 # UI/UX standing directives
 
 - Prioritize UX and visual polish over speed of delivery — the app should feel easy and pleasant to use, not merely functional.
