@@ -50,7 +50,6 @@ export function FamilyTreeCanvas({
   orientation: "tb" | "lr";
 }) {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-  const [panelMode, setPanelMode] = useState<"compact" | "full" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
@@ -89,26 +88,14 @@ export function FamilyTreeCanvas({
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedPersonId(node.id);
-    setPanelMode("compact");
-  }, []);
-
-  const handleNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedPersonId(node.id);
-    setPanelMode("full");
   }, []);
 
   const handleClosePanel = useCallback(() => {
     setSelectedPersonId(null);
-    setPanelMode(null);
-  }, []);
-
-  const handleExpandPanel = useCallback(() => {
-    setPanelMode("full");
   }, []);
 
   const handleSelectPerson = useCallback((personId: string) => {
     setSelectedPersonId(personId);
-    setPanelMode("compact");
   }, []);
 
   const searchResults = searchPeople(people, searchQuery);
@@ -122,7 +109,6 @@ export function FamilyTreeCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
         nodesDraggable={false}
         fitView
       >
@@ -130,6 +116,7 @@ export function FamilyTreeCanvas({
         <Controls />
         <OrientationEffectHandler
           people={people}
+          relationships={relationships}
           orientation={orientation}
           dagreLayout={dagreLayout}
           setNodes={setNodes}
@@ -144,14 +131,14 @@ export function FamilyTreeCanvas({
           onSelectPerson={handleSelectPerson}
         />
       </ReactFlow>
-      {selectedPersonId && panelMode && (
+      {selectedPersonId && (
         <DetailPanel
           person={peopleById.get(selectedPersonId)!}
           relationships={relationships}
           peopleById={peopleById}
-          mode={panelMode}
+          canEdit={canEdit}
+          isAdmin={isAdmin}
           onClose={handleClosePanel}
-          onExpand={handleExpandPanel}
           onSelectPerson={handleSelectPerson}
         />
       )}
@@ -161,11 +148,13 @@ export function FamilyTreeCanvas({
 
 function OrientationEffectHandler({
   people,
+  relationships,
   orientation,
   dagreLayout,
   setNodes,
 }: {
   people: Person[];
+  relationships: Relationship[];
   orientation: "tb" | "lr";
   dagreLayout: Map<string, { x: number; y: number }>;
   setNodes: Dispatch<SetStateAction<Node[]>>;
@@ -182,8 +171,12 @@ function OrientationEffectHandler({
       }))
     );
     void reactFlow.fitView({ duration: 500 });
+    // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
+    // which is recomputed fresh every render and would make this loop) —
+    // their reference only changes when the server data actually changes
+    // (via router.refresh()), or when the user toggles orientation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orientation]);
+  }, [orientation, people, relationships]);
 
   return null;
 }

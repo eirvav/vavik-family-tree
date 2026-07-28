@@ -122,7 +122,7 @@ export function ViewWrapper({
           />
         </div>
         <div className={`absolute inset-0 ${viewMode === "liste" ? "" : "hidden"}`}>
-          <ListView people={people} relationships={relationships} />
+          <ListView people={people} relationships={relationships} canEdit={canEdit} isAdmin={isAdmin} />
         </div>
       </div>
     </div>

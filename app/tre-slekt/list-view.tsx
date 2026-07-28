@@ -26,13 +26,16 @@ function groupByFamilyNameInitial(sorted: Person[]) {
 export function ListView({
   people,
   relationships,
+  canEdit,
+  isAdmin,
 }: {
   people: Person[];
   relationships: Relationship[];
+  canEdit: boolean;
+  isAdmin: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-  const [panelMode, setPanelMode] = useState<"compact" | "full" | null>(null);
 
   const filtered = query.trim() ? searchPeople(people, query) : people;
   const sorted = [...filtered].sort((a, b) => a.family_name.localeCompare(b.family_name, "nb"));
@@ -41,16 +44,10 @@ export function ListView({
 
   const handleSelectPerson = (personId: string) => {
     setSelectedPersonId(personId);
-    setPanelMode("compact");
   };
 
   const handleClosePanel = () => {
     setSelectedPersonId(null);
-    setPanelMode(null);
-  };
-
-  const handleExpandPanel = () => {
-    setPanelMode("full");
   };
 
   return (
@@ -118,14 +115,14 @@ export function ListView({
           ))}
         </div>
       </div>
-      {selectedPersonId && panelMode && (
+      {selectedPersonId && (
         <DetailPanel
           person={peopleById.get(selectedPersonId)!}
           relationships={relationships}
           peopleById={peopleById}
-          mode={panelMode}
+          canEdit={canEdit}
+          isAdmin={isAdmin}
           onClose={handleClosePanel}
-          onExpand={handleExpandPanel}
           onSelectPerson={handleSelectPerson}
         />
       )}
