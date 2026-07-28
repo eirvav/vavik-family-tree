@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -84,7 +84,7 @@ export function FamilyTreeCanvas({
     };
   });
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -168,8 +168,7 @@ function OrientationEffectHandler({
   people: Person[];
   orientation: "tb" | "lr";
   dagreLayout: Map<string, { x: number; y: number }>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setNodes: (nodes: any[]) => void;
+  setNodes: Dispatch<SetStateAction<Node[]>>;
 }) {
   const reactFlow = useReactFlow();
 
