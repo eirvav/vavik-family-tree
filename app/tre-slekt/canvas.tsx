@@ -92,6 +92,16 @@ export function FamilyTreeCanvas({
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
   const selectedPerson = selectedPersonId ? peopleById.get(selectedPersonId) : undefined;
+  const selectedPersonPartners = selectedPerson
+    ? relationships
+        .filter(
+          (r) =>
+            PARTNER_RELATIONSHIP_TYPES.has(r.relationship_type) &&
+            (r.person_a_id === selectedPerson.id || r.person_b_id === selectedPerson.id)
+        )
+        .map((r) => peopleById.get(r.person_a_id === selectedPerson.id ? r.person_b_id : r.person_a_id))
+        .filter((p): p is Person => p !== undefined)
+    : [];
   const dagreLayout = computeDagreLayout(people, relationships);
 
   const initialNodes = buildNodes(people, dagreLayout);
@@ -164,7 +174,6 @@ export function FamilyTreeCanvas({
       {isAdmin && selectedPerson && (
         <ActionBar
           selectedPerson={selectedPerson}
-          relationships={relationships}
           onAdd={(kind) => setActiveDialog({ type: "add", kind })}
           onDelete={() => setActiveDialog({ type: "delete" })}
         />
@@ -174,6 +183,7 @@ export function FamilyTreeCanvas({
           key={activeDialog.kind}
           kind={activeDialog.kind}
           selectedPerson={selectedPerson}
+          partners={selectedPersonPartners}
           onClose={() => setActiveDialog(null)}
           onCreated={(newPersonId) => {
             setActiveDialog(null);

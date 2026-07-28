@@ -32,11 +32,13 @@ const PARTNER_TYPE_OPTIONS = [
 export function AddRelationshipDialog({
   kind,
   selectedPerson,
+  partners,
   onClose,
   onCreated,
 }: {
   kind: Kind;
   selectedPerson: Person;
+  partners: Person[];
   onClose: () => void;
   onCreated: (newPersonId: string) => void;
 }) {
@@ -54,6 +56,7 @@ export function AddRelationshipDialog({
   const showTypeSelector = kind !== "sibling";
   const typeOptions = kind === "partner" ? PARTNER_TYPE_OPTIONS : PARENT_TYPE_OPTIONS;
   const [relationshipType, setRelationshipType] = useState(typeOptions[0].value);
+  const [secondParentId, setSecondParentId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +69,7 @@ export function AddRelationshipDialog({
         familyName,
         gender,
         relationshipType,
+        secondParentId: secondParentId || undefined,
       });
       if (!result.ok) {
         setError(result.error);
@@ -125,6 +129,23 @@ export function AddRelationshipDialog({
               {typeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {kind === "child" && partners.length > 0 && (
+          <label className="mt-3 flex flex-col gap-1 text-sm">
+            Sammen med (valgfritt)
+            <select
+              value={secondParentId}
+              onChange={(e) => setSecondParentId(e.target.value)}
+              className="rounded-lg border border-line bg-background px-3 py-1.5 text-foreground"
+            >
+              <option value="">Ingen valgt</option>
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.given_name} {p.family_name}
                 </option>
               ))}
             </select>

@@ -41,6 +41,7 @@ export async function createRelatedPerson(input: {
   familyName: string;
   gender: "male" | "female" | "unknown";
   relationshipType: string;
+  secondParentId?: string;
 }): Promise<{ ok: true; newPersonId: string } | { ok: false; error: string }> {
   const authCheck = await requireAdmin();
   if (!authCheck.ok) return authCheck;
@@ -61,11 +62,19 @@ export async function createRelatedPerson(input: {
   } else if (input.kind === "child") {
     // Selected person is the parent (person_a); the new person is the child (person_b).
     edges = [{ other_person_id: input.selectedPersonId, relationship_type: input.relationshipType, new_person_is_a: false }];
+    if (input.secondParentId) {
+      edges.push({ other_person_id: input.secondParentId, relationship_type: input.relationshipType, new_person_is_a: false });
+    }
   } else if (input.kind === "partner") {
     edges = [{ other_person_id: input.selectedPersonId, relationship_type: input.relationshipType, new_person_is_a: false }];
   } else {
-    // sibling: link the new person as a child of each of the selected
-    // person's existing active parents, mirroring that parent link's type.
+    // sibling: always create a direct sibling edge to the selected person
+    // (this is what makes the feature work with no parent on file). If the
+    // selected person has active parent(s) recorded, additionally mirror
+    // those same links onto the new sibling — extra detail when available,
+    // never a precondition.
+    edges = [{ other_person_id: input.selectedPersonId, relationship_type: "sibling", new_person_is_a: false }];
+
     const { data: parentLinks, error: parentError } = await supabase
       .from("relationships")
       .select("person_a_id, relationship_type")
@@ -76,15 +85,14 @@ export async function createRelatedPerson(input: {
     if (parentError) {
       return { ok: false, error: "Kunne ikke hente foreldre." };
     }
-    if (!parentLinks || parentLinks.length === 0) {
-      return { ok: false, error: "Personen har ingen registrerte foreldre å knytte søsken til." };
-    }
 
-    edges = parentLinks.map((link) => ({
-      other_person_id: link.person_a_id,
-      relationship_type: link.relationship_type,
-      new_person_is_a: false,
-    }));
+    for (const link of parentLinks ?? []) {
+      edges.push({
+        other_person_id: link.person_a_id,
+        relationship_type: link.relationship_type,
+        new_person_is_a: false,
+      });
+    }
   }
 
   const { data: newPersonId, error } = await supabase.rpc("create_related_person", {
