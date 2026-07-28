@@ -54,25 +54,58 @@ function buildNodes(
 }
 
 function buildEdges(relationships: Relationship[]) {
-  return relationships.map((rel) => {
-    const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
-    const isFormerPartnerEdge = FORMER_PARTNER_TYPES.has(rel.relationship_type);
-    const label = RELATIONSHIP_LABELS[rel.relationship_type];
+  // person id -> set of that person's active parent ids, used below to
+  // check whether two siblings already share a recorded parent.
+  const parentsOf = new Map<string, Set<string>>();
+  for (const rel of relationships) {
+    if (!PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type)) continue;
+    if (!parentsOf.has(rel.person_b_id)) parentsOf.set(rel.person_b_id, new Set());
+    parentsOf.get(rel.person_b_id)!.add(rel.person_a_id);
+  }
 
-    return {
-      id: rel.id,
-      source: rel.person_a_id,
-      target: rel.person_b_id,
-      ...(isParentEdge && {
-        type: "smoothstep",
-        markerEnd: { type: MarkerType.ArrowClosed },
-      }),
-      ...(isFormerPartnerEdge && {
-        style: { strokeDasharray: "5,5" },
-      }),
-      ...(label && { label }),
-    };
-  });
+  function shareActiveParent(personAId: string, personBId: string): boolean {
+    const parentsA = parentsOf.get(personAId);
+    const parentsB = parentsOf.get(personBId);
+    if (!parentsA || !parentsB) return false;
+    for (const p of parentsA) {
+      if (parentsB.has(p)) return true;
+    }
+    return false;
+  }
+
+  return relationships
+    .filter((rel) => {
+      // A sibling edge is only drawn when the pair does NOT already share
+      // a recorded parent — the shared parent's own bus already shows the
+      // connection, and a separate line would be redundant clutter.
+      if (rel.relationship_type === "sibling") {
+        return !shareActiveParent(rel.person_a_id, rel.person_b_id);
+      }
+      return true;
+    })
+    .map((rel) => {
+      const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
+      const isFormerPartnerEdge = FORMER_PARTNER_TYPES.has(rel.relationship_type);
+      const isSiblingEdge = rel.relationship_type === "sibling";
+      const label = RELATIONSHIP_LABELS[rel.relationship_type];
+
+      return {
+        id: rel.id,
+        source: rel.person_a_id,
+        target: rel.person_b_id,
+        ...(isParentEdge && {
+          type: "smoothstep",
+          markerEnd: { type: MarkerType.ArrowClosed },
+        }),
+        ...((PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type) || isSiblingEdge) && {
+          type: "straight",
+        }),
+        ...(isFormerPartnerEdge && {
+          style: { strokeDasharray: "5,5" },
+        }),
+        ...(label && { label }),
+      };
+    });
 }
 
 export function FamilyTreeCanvas({
