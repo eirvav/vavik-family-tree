@@ -8,6 +8,7 @@ import { PersonNode } from "./person-node";
 import { DetailPanel } from "./detail-panel";
 import { ActionBar } from "./action-bar";
 import { AddRelationshipDialog } from "./add-relationship-dialog";
+import { DeletePersonDialog } from "./delete-person-dialog";
 import { computeDagreLayout } from "@/lib/family-tree/layout";
 import { searchPeople } from "@/lib/family-tree/search";
 import type { Person, Relationship } from "@/lib/family-tree/data";
@@ -166,6 +167,16 @@ export function FamilyTreeCanvas({
           onCreated={(newPersonId) => {
             setActiveDialog(null);
             setSelectedPersonId(newPersonId);
+          }}
+        />
+      )}
+      {activeDialog?.type === "delete" && selectedPersonId && (
+        <DeletePersonDialog
+          person={peopleById.get(selectedPersonId)!}
+          onClose={() => setActiveDialog(null)}
+          onDeleted={() => {
+            setActiveDialog(null);
+            setSelectedPersonId(null);
           }}
         />
       )}
