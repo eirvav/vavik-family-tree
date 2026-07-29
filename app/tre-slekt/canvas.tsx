@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ReactFlow, Background, Controls, MarkerType, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
+import { ReactFlow, Background, Controls, useNodesState, useEdgesState, useReactFlow } from "@xyflow/react";
 import type { Edge, Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { PersonNode } from "./person-node";
@@ -118,7 +118,6 @@ function buildEdges(relationships: Relationship[], dagreLayout: Map<string, { x:
         targetHandle,
         ...(isParentEdge && {
           type: "smoothstep",
-          markerEnd: { type: MarkerType.ArrowClosed },
         }),
         ...(isStraightEdge && {
           type: "straight",
