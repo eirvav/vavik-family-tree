@@ -23,7 +23,8 @@ export function PersonNode({ data }: { data: { person: Person; selected?: boolea
       role="group"
       aria-label={`${person.given_name} ${person.family_name}${years ? `, ${years}` : ""}`}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="target" position={Position.Left} id="left" />
       <span
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-background text-sm text-muted"
         aria-hidden="true"
@@ -39,7 +40,8 @@ export function PersonNode({ data }: { data: { person: Person; selected?: boolea
       {!person.is_living && (
         <span className="ml-1 h-2 w-2 shrink-0 rounded-full bg-muted" aria-label="Avdød" title="Avdød" />
       )}
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} id="bottom" />
+      <Handle type="source" position={Position.Right} id="right" />
     </div>
   );
 }

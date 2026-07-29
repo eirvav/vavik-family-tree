@@ -54,7 +54,7 @@ function buildNodes(
   }));
 }
 
-function buildEdges(relationships: Relationship[]) {
+function buildEdges(relationships: Relationship[], dagreLayout: Map<string, { x: number; y: number }>) {
   // person id -> set of that person's active parent ids, used below to
   // check whether two siblings already share a recorded parent.
   const parentsOf = new Map<string, Set<string>>();
@@ -88,17 +88,39 @@ function buildEdges(relationships: Relationship[]) {
       const isParentEdge = PARENT_RELATIONSHIP_TYPES.has(rel.relationship_type);
       const isFormerPartnerEdge = FORMER_PARTNER_TYPES.has(rel.relationship_type);
       const isSiblingEdge = rel.relationship_type === "sibling";
+      const isStraightEdge = PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type) || isSiblingEdge;
       const label = RELATIONSHIP_LABELS[rel.relationship_type];
+
+      // Partner/sibling pairs are laid out same-rank and side by side, but
+      // `person_a`/`person_b` order has no relation to which one actually
+      // ends up on the left — connecting fixed top/bottom handles (the
+      // parent-child default) draws a diagonal instead of a horizontal
+      // line. Route these through the left/right handles instead, picking
+      // source/target by actual x position so the line is always drawn
+      // from the left node's right handle to the right node's left handle.
+      let source = rel.person_a_id;
+      let target = rel.person_b_id;
+      let sourceHandle = "bottom";
+      let targetHandle = "top";
+      if (isStraightEdge) {
+        const xA = dagreLayout.get(rel.person_a_id)?.x ?? 0;
+        const xB = dagreLayout.get(rel.person_b_id)?.x ?? 0;
+        [source, target] = xA <= xB ? [rel.person_a_id, rel.person_b_id] : [rel.person_b_id, rel.person_a_id];
+        sourceHandle = "right";
+        targetHandle = "left";
+      }
 
       return {
         id: rel.id,
-        source: rel.person_a_id,
-        target: rel.person_b_id,
+        source,
+        target,
+        sourceHandle,
+        targetHandle,
         ...(isParentEdge && {
           type: "smoothstep",
           markerEnd: { type: MarkerType.ArrowClosed },
         }),
-        ...((PARTNER_RELATIONSHIP_TYPES.has(rel.relationship_type) || isSiblingEdge) && {
+        ...(isStraightEdge && {
           type: "straight",
         }),
         ...(isFormerPartnerEdge && {
@@ -145,14 +167,14 @@ export function FamilyTreeCanvas({
   const dagreLayout = computeDagreLayout(people, relationships);
 
   const initialNodes = buildNodes(people, dagreLayout, selectedPersonId);
-  const initialEdges = buildEdges(relationships);
+  const initialEdges = buildEdges(relationships, dagreLayout);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
 
   useEffect(() => {
     setNodes(buildNodes(people, dagreLayout, selectedPersonId));
-    setEdges(buildEdges(relationships) as Edge[]);
+    setEdges(buildEdges(relationships, dagreLayout) as Edge[]);
     // Depends on the `people`/`relationships` PROPS (not `dagreLayout`,
     // which is recomputed fresh every render and would make this loop) —
     // their reference only changes when the server data actually changes,
